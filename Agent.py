@@ -8,9 +8,10 @@ class Agent:
         self.selection_mode = "greedy"
         self.action_history = []
         self.rewards_history = []
+        self.epsilon = 0.5
 
-    # call appropriate action selection based on selection_mode
-    def choose_action:
+    # call appropriate action selection method based on selection_mode
+    def choose_action(self):
         pass
 
     def estimate_action(self, time, action):
@@ -31,9 +32,12 @@ class Agent:
         return best_action
 
     def epsilon_greedy(self):
-        best_eps_action = random.Random()
-        # implement eps greedy here
-        return best_eps_action
+        eps_action = random.uniform(0, 1)
+        if eps_action < self.epsilon:
+            return self.greedy()
+        else:
+            # TODO: k or k-1? cross check against Problem.py implementation
+            return random.randint(0, self.envmt.k - 1)
 
     def optim_init_vals(self):
         best_action = random.Random()
@@ -47,6 +51,7 @@ class Agent:
 
     def ucb(self):
         best_action = random.Random()
+
         # implement eps greedy here
         return best_action
 
