@@ -20,6 +20,7 @@ class Agent:
         self.mode = mode
         self.estimations = []
         self.uncertainties = [0] * env.arms
+        self.preferences = []
         self.initialize_estimations()
         self.step = 0 # time step
         # hyperparameters:
@@ -99,12 +100,21 @@ class Agent:
         return best_action
 
     def ucb(self):
-        best_action = random.Random()
-
-        # implement eps greedy here
+        best_reward = 0
+        best_action = None
+        for arm in range(self.env.arms):
+            reward = self.estimations[arm] + self.ucb_c * math.sqrt((np.log(self.step) / self.uncertainties[arm]))
+            if best_reward > reward:
+                best_action = arm
+                best_reward = reward
         return best_action
 
     def action_pref(self):
-        best_action = random.Random()
-        # implement eps greedy here
+
         return best_action
+
+    def boltzmann(self, selected_arm):
+        sum = 0
+        for arm in range(self.env.arms):
+            sum += math.exp(h(arm))
+        return math.exp(h(selected_arm)) / sum
