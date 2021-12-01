@@ -4,61 +4,66 @@ from numpy import random
 
 
 class Dist(Enum):
-    GAUSS = 0,
+    GAUSS = 0
     BERNOULLI = 1
 
 
 class Problem:
-
-    def __init__(self, k, dist=Dist.BERNOULLI):
+    def __init__(self, k, dist_type=Dist.GAUSS, verbose=False):
         """
         Initializes the multi-armed bandit problem object
         :param k: Number of arms
-        :param dist: Reward distribution (Bernoulli dist. by default)
+        :param dist_type: Reward distribution (Gaussian dist_type. by default)
         """
-        if dist == Dist.GAUSS:
-            self.stdevs = [] # standard deviation for each arm
-            self.generate_stdevs()
-        elif dist == Dist.BERNOULLI:
-            self.stdevs = None # stdevs not needed for Bernoulli dist
+        self.arms = k  # number of arms
+        self.dist_type = dist_type  # reward distribution type
+
+        if dist_type == Dist.GAUSS:
+            self.reward_dists = []  # reward distributions for each arm
+            self.generate_reward_dists(verbose)
+        elif dist_type == Dist.BERNOULLI:
+            self.reward_dists = []  # reward probability for each arm
+            self.generate_probabilities(verbose)
         else:
             # invalid distribution provided, exit
-            sys.exit("Invalid distribution (dist = " + str(dist) + ") provided!")
+            sys.exit("Invalid distribution (dist_type = " + str(dist_type) + ") provided!")
 
-        self.actions = k  # number of actions
-        self.probabilities = []  # probability for each arm i (k arms in total), mean reward for Gaussian
-        self.time = 0  # current time step
-        self.dist = dist  # reward distribution
+    def generate_probabilities(self, verbose):
+        """
+        Generates reward probabilities for each arm. Used for Bernoulli distribution.
+        """
+        for a in range(self.arms):
+            prob = random.uniform(0, 1)
+            if verbose:
+                print("ARM {}:\t{}".format(a, round(prob,3)))
+            self.reward_dists.append(prob)
 
-        self.generate_probabilities()
-
-    def generate_probabilities(self):
+    def generate_reward_dists(self, verbose):
         """
-        Generates probabilities for each arm
+        Generates reward distributions for each arm. Used for Gaussian distribution.
         """
-        for _ in range(self.actions):
-            self.probabilities.append(random.uniform(0, 1))
-
-    def generate_stdevs(self):
-        """
-        Generates standard deviations for each arm
-        """
-        for _ in range(self.actions):
-            self.stdevs.append(random.uniform(0, 1))
+        for a in range(self.arms):
+            stdev = random.uniform(0, .4)
+            mean = random.uniform(stdev, 1 - stdev)
+            dist = random.normal(loc=mean, scale=stdev)
+            if verbose:
+                print("ARM {}:\t MEAN: {},\t STD: {}".format(a, round(mean, 3), round(stdev, 3)))
+            self.reward_dists.append(dist)
 
     def pull_arm(self, a):
         """
-        Performs a specific action and increments time
+        Performs a specific action
         :param a: Action to perform
         :returns Reward from the action
         """
-        if self.dist == Dist.GAUSS:
+        if None:
+            return 0
+        if self.dist_type == Dist.GAUSS:
             # Gaussian distribution
-            reward = random.normal(loc=self.probabilities[a], scale=self.stdevs[a])
+            reward = random.choice(self.reward_dists)
             if reward < 0:
                 reward = 0
         else:
             # Bernoulli distribution
-            reward = int(random.uniform(0, 1) < self.probabilities[a])
-        self.time += 1 # increment time
+            reward = int(random.uniform(0, 1) < self.reward_dists[a])
         return reward
