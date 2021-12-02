@@ -54,12 +54,13 @@ class Agent:
         :param max_steps: Max number of epochs
         Runs the agent on the problem.
         """
-        for self.step in range(max_steps):
+        for self.step in range(self.step, max_steps):
             arm, reward = self.choose_action()
             # update parameters
             self.update_parameters(arm, reward)
             if verbose:
                 print("Step:", self.step, "; Pulling arm", arm, "; Reward:", round(reward, 3))
+        print("Process complete!")
 
     def choose_action(self):
         """

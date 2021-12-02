@@ -17,13 +17,14 @@ class Problem:
         """
         self.arms = k  # number of arms
         self.dist_type = dist_type  # reward distribution type
+        self.verbose = verbose # prints extra info if True
 
         if dist_type == Dist.GAUSS:
             self.reward_dists = []  # reward distributions for each arm
-            self.generate_reward_dists(verbose)
+            self.generate_reward_dists()
         elif dist_type == Dist.BERNOULLI:
             self.reward_dists = []  # reward probability for each arm
-            self.generate_probabilities(verbose)
+            self.generate_probabilities()
         else:
             # invalid distribution provided, exit
             sys.exit("Invalid distribution (dist_type = " + str(dist_type) + ") provided!")
@@ -49,17 +50,16 @@ class Problem:
                 print("ARM {}:\t{}".format(a, round(prob, 3)))
             self.reward_dists.append(prob)
 
-    def generate_reward_dists(self, verbose):
+    def generate_reward_dists(self):
         """
         Generates reward distributions for each arm. Used for Gaussian distribution.
         """
         for a in range(self.arms):
             stdev = random.uniform(0, .4)
             mean = random.uniform(stdev, 1 - stdev)
-            dist = random.normal(loc=mean, scale=stdev)
-            if verbose:
+            if self.verbose:
                 print("ARM {}:\t MEAN: {},\t STD: {}".format(a, round(mean, 3), round(stdev, 3)))
-            self.reward_dists.append(dist)
+            self.reward_dists.append((mean, stdev))
 
     def pull_arm(self, a):
         """
@@ -71,7 +71,8 @@ class Problem:
             return 0
         if self.dist_type == Dist.GAUSS:
             # Gaussian distribution
-            reward = random.choice(self.reward_dists)
+            mean, stdev = self.reward_dists[a][0], self.reward_dists[a][1]
+            reward = random.normal(loc=mean, scale=stdev)
             if reward < 0:
                 reward = 0
         else:

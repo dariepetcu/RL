@@ -10,8 +10,8 @@ def run_agent(dist_type, mode, k):
 
 
 def main():
-    dist_type = Dist.GAUSS
-    mode = Mode.UCB
+    dist_type = Dist.BERNOULLI
+    mode = Mode.ACTION_PREFERENCES
     k = 100
     run_agent(dist_type, mode, k)
 
