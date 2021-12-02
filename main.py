@@ -11,7 +11,7 @@ def run_agent(dist_type, mode, k):
 
 def main():
     dist_type = Dist.GAUSS
-    mode = Mode.EPSILON_GREEDY
+    mode = Mode.UCB
     k = 100
     run_agent(dist_type, mode, k)
 
