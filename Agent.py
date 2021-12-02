@@ -29,10 +29,11 @@ def categorical_draw(pi):
 
 
 class Agent:
-    def __init__(self, env, mode=Mode.GREEDY, epsilon=0.5, ucb_c = 0.5):
+    def __init__(self, env, mode=Mode.GREEDY, epsilon=0.5, ucb_c=0.5, alpha=0.5, tau=0.5):
+        self.tau = tau
         self.env = env
         self.mode = mode
-        self.step = 1  # time step
+        self.step = 3 if mode == Mode.UCB else 1 # time step
 
         self.estimations = [0] * env.arms
         self.uncertainties = [1] * env.arms
@@ -45,8 +46,9 @@ class Agent:
         self.ucb_c = ucb_c
         self.alpha = alpha
 
+        self.initialize_estimations()
 
-    def run(self,verbose=False,max_steps = 100):
+    def run(self, verbose=False, max_steps=100):
         """
         :param verbose: Prints verbose code
         :param max_steps: Max number of epochs
@@ -97,7 +99,7 @@ class Agent:
 
     def ucb(self):
         best_reward = 0
-        best_action = None
+        best_action = 0
         for arm in range(self.env.arms):
             reward = self.estimations[arm] + self.ucb_c * math.sqrt((np.log(self.step) / self.uncertainties[arm]))
             if best_reward > reward:

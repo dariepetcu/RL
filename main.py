@@ -6,7 +6,7 @@ def run_agent(dist_type, mode, k):
     env = Problem(k, dist_type=dist_type, verbose=False)
     agent = Agent(env, mode=mode)
 
-    agent.run(verbose=True, max_steps=10)
+    agent.run(verbose=True, max_steps=100)
 
 
 def main():

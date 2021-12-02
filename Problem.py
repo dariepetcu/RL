@@ -28,14 +28,25 @@ class Problem:
             # invalid distribution provided, exit
             sys.exit("Invalid distribution (dist_type = " + str(dist_type) + ") provided!")
 
-    def generate_probabilities(self, verbose):
+    def get_max_values(self):
+        if self.dist_type == Dist.GAUSS:
+            max_values = []
+            for a in range(self.arms):
+                mean, stdev = self.reward_dists[a][0], self.reward_dists[a][1]
+                rewards = random.normal(loc=mean, scale=stdev, size=500)
+                max_values.append(max(rewards))
+        else:
+            max_values = [1] * self.arms
+        return max_values
+
+    def generate_probabilities(self):
         """
         Generates reward probabilities for each arm. Used for Bernoulli distribution.
         """
         for a in range(self.arms):
             prob = random.uniform(0, 1)
-            if verbose:
-                print("ARM {}:\t{}".format(a, round(prob,3)))
+            if self.verbose:
+                print("ARM {}:\t{}".format(a, round(prob, 3)))
             self.reward_dists.append(prob)
 
     def generate_reward_dists(self, verbose):
