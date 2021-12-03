@@ -14,10 +14,11 @@ class Problem:
         Initializes the multi-armed bandit problem object
         :param k: Number of arms
         :param dist_type: Reward distribution (Gaussian dist_type. by default)
+        :param verbose: If True, prints additional information about the problem
         """
         self.arms = k  # number of arms
         self.dist_type = dist_type  # reward distribution type
-        self.verbose = verbose # prints extra info if True
+        self.verbose = verbose
 
         if dist_type == Dist.GAUSS:
             self.reward_dists = []  # reward distributions for each arm
@@ -30,6 +31,10 @@ class Problem:
             sys.exit("Invalid distribution (dist_type = " + str(dist_type) + ") provided!")
 
     def get_max_values(self):
+        """
+        Returns the maximum value from an array of 1000 samples from the distribution of each arm.
+        :returns Maximum generated value per arm (list of 1s if Bernoulli dist)
+        """
         if self.dist_type == Dist.GAUSS:
             max_values = []
             for a in range(self.arms):
@@ -65,7 +70,7 @@ class Problem:
         """
         Performs a specific action
         :param a: Action to perform
-        :returns Reward from the action
+        :returns Reward for the action
         """
         if None:
             return 0

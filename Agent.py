@@ -4,7 +4,7 @@ import sys
 import numpy as np
 from enum import Enum
 
-
+# enum to store algorithm type
 class Mode(Enum):
     GREEDY = 0
     EPSILON_GREEDY = 1
@@ -19,6 +19,7 @@ def categorical_draw(pi):
     z = random.random()
     cum_prob = 0.0
 
+    # return the randomly selected arm
     for i in range(len(pi)):
         prob = pi[i]
         cum_prob += prob
@@ -30,21 +31,35 @@ def categorical_draw(pi):
 
 class Agent:
     def __init__(self, env, mode=Mode.GREEDY, epsilon=0.5, ucb_c=0.5, alpha=0.5, tau=0.5):
-        self.tau = tau
+        """
+        Agent that solves the multi armed bandit problem
+        :param env: the multi-armed bandit
+        :param mode: selected algorithm
+        :param epsilon: for eps-greedy
+        :param ucb_c: c hyperparameter for UCB
+        :param alpha: alpha hyperparameter for action preference
+        :param tau: hyperparameter for softmax
+        """
         self.env = env
         self.mode = mode
-        self.step = 3 if mode == Mode.UCB else 1 # time step
+        # time step, starts at 3 for UCB to avoid subunitary ln
+        self.step = 3 if mode == Mode.UCB else 1
 
+        # Qt(a) initialized to 0
         self.estimations = [0] * env.arms
+        # Na(t) starts at 1 to avoid division by 0 in UCB
         self.uncertainties = [1] * env.arms
+        # Ht(a) and PIt(a) initialized to equal complementary probabilities
         self.H = [1 / env.arms] * env.arms
         self.pi = [1 / env.arms] * env.arms
+        # optimistic values retrieved from Problem.py distributions
         self.optimistic_values = env.get_max_values()
 
         # hyperparameters:
         self.epsilon = epsilon
         self.ucb_c = ucb_c
         self.alpha = alpha
+        self.tau = tau
 
         self.initialize_estimations()
 
@@ -87,11 +102,18 @@ class Agent:
         return selected_arm, self.env.pull_arm(selected_arm)
 
     def greedy(self):
+        """
+        Selects action for greedy algorithm
+        :returns selected action
+        """
         best_action = np.argmax(self.estimations)
-        # implement eps greedy here
         return best_action
 
     def epsilon_greedy(self):
+        """
+        Selects action for epsilon greedy algorithm
+        :returns selected action
+        """
         eps_action = random.uniform(0, 1)
         if eps_action < self.epsilon:
             return self.greedy()
@@ -99,6 +121,10 @@ class Agent:
             return random.randint(0, self.env.arms - 1)
 
     def ucb(self):
+        """
+        Selects action for UCB algorithm
+        :returns selected action
+        """
         best_reward = 0
         best_action = 0
         for arm in range(self.env.arms):
@@ -109,17 +135,27 @@ class Agent:
         return best_action
 
     def softmax(self):
-        # Pick arm based on cumulative probability
+        """
+        Selects action for softmax algorithm
+        :returns selected action
+        """
         best_action = categorical_draw(self.pi)
         return best_action
 
     def action_pref(self):
-        # select action
+        """
+        Selects action for action preference algorithm
+        :returns selected action
+        """
         best_action = categorical_draw(self.H)
         return best_action
 
-    # update the parameters that are relevant for the chosen algorithm
     def update_parameters(self, arm, reward):
+        """
+        Calls appropriate methods for parameter updating, depending on selected algorithm
+        :param arm: selected arm
+        :param reward: obtained reward
+        """
         self.update_estimations(arm, reward)
         match self.mode:
             case Mode.UCB:
@@ -130,26 +166,39 @@ class Agent:
                 self.update_preferences(arm, reward)
                 self.update_pi(arm)
 
-    # Q(a) = 0 unless optimistic initial values
     def initialize_estimations(self):
+        """
+        Initializes the estimations either optimistically or at a fixed value
+        """
         if self.mode == Mode.OPTIMISTIC:
             # initialize values as more than max possible reward
             self.estimations = self.optimistic_values
-            pass
         else:
             # initialize values at a specific value
             self.estimations = [0] * self.env.arms
-            pass
 
-    # incremental sample-average update
     def update_estimations(self, arm, reward):
+        """
+        incremental sample-average update. updates the utility estimate of the selected arm based on the resultant
+        reward
+        :param arm: Selected arm
+        :param reward: Resultant reward
+        """
         if self.step > 0:
             self.estimations[arm] += (reward - self.estimations[arm]) / self.step
 
     def update_uncertainties(self, selected_arm):
+        """
+        Increments the uncertainties for the UCB algorithm
+        :param selected_arm: Selected arm
+        """
         self.uncertainties[selected_arm] += 1
 
     def update_preferences(self, selected_arm, reward):
+        """
+        Updates the action preferences of all arms for action preferences
+        :param selected_arm: Selected arm
+        """
         for arm in range(self.env.arms):
             regret = (self.optimistic_values[arm] - reward)
             if arm == selected_arm:
@@ -158,6 +207,10 @@ class Agent:
                 self.H[arm] -= self.alpha * regret * self.pi[arm]
 
     def update_pi(self, selected_arm):
+        """
+        Updates the pi value of all arms for softmax/action preferences
+        :param selected_arm: Selected arm
+        """
         total = 0
         for arm in range(self.env.arms):
             total += math.exp((self.estimations[arm] / self.tau) if self.mode == Mode.SOFTMAX else (self.H[arm]))
