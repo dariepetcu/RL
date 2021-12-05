@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 from Problem import Problem, Dist
 
 
-def plot_average(avg_rewards, dist_type, num):
+def plot_average(avg_rewards, dist_type, num, modes):
     """
     Plots a graph for the average performance of multiple agents per distribution.
     :param avg_rewards: List of average rewards over time per agent.
@@ -13,7 +13,7 @@ def plot_average(avg_rewards, dist_type, num):
     """
     fig = plt.figure(figsize=(10, 8))
     for i in range(len(avg_rewards)):
-        label = Mode(i).name
+        label = modes[i].name
         plt.plot(avg_rewards[i], label=label)
     plt.legend(loc='upper right')
     plt.xlabel("Time-step")
@@ -23,19 +23,6 @@ def plot_average(avg_rewards, dist_type, num):
     plt.show()
     fname = os.getcwd() + '/plots/avg/' + dist_type.name + '.png'
     fig.savefig(fname)
-
-
-def run_agent(dist_type, mode, k):
-    """
-    Runs the agent with the given parameters
-    :param dist_type: Distribution type
-    :param mode: Selection mode
-    :param k: Number of arms
-    """
-
-    env = Problem(k, dist_type=dist_type, verbose=False)
-    agent = Agent(env, mode=mode, epsilon=.1)
-    agent.run(verbose=False, plot=False, max_steps=1000)
 
 
 def run_and_plot_avg(dist_type=Dist.GAUSS, k=7, num=1000, modes=Mode.__iter__(),reward_dists=None):
@@ -52,7 +39,7 @@ def run_and_plot_avg(dist_type=Dist.GAUSS, k=7, num=1000, modes=Mode.__iter__(),
     for mode in modes:
         rewards = None
         for _ in range(num):
-            agent = Agent(env, mode=mode, epsilon=.1, ucb_c=0.4, alpha=1, tau=5)
+            agent = Agent(env, mode=mode, epsilon=0.1, ucb_c=0.4, alpha=1, tau=5)
             agent.run(verbose=False, plot=False, max_steps=1000)
             if rewards is None:
                 rewards = agent.average_rewards
@@ -61,7 +48,7 @@ def run_and_plot_avg(dist_type=Dist.GAUSS, k=7, num=1000, modes=Mode.__iter__(),
         rewards = [x / num for x in rewards]
         avg_rewards.append(rewards)
         print(mode.name, 'complete!')
-    plot_average(avg_rewards, dist_type, num)
+    plot_average(avg_rewards, dist_type, num, modes)
 
 
 def main():
@@ -76,7 +63,7 @@ def main():
                      [0.519, 0.278]]
     k = 7
     num = 1000
-    run_and_plot_avg(dist_type, k, num, modes=modes, reward_dists=rewards_gauss)
+    run_and_plot_avg(dist_type, k, num, reward_dists=rewards_gauss)
 
 
 if __name__ == "__main__":
