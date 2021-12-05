@@ -35,7 +35,7 @@ def categorical_draw(pi):
 
 
 class Agent:
-    def __init__(self, env, mode=Mode.GREEDY, epsilon=0.7, ucb_c=0.5, alpha=0.5, tau=0.5):
+    def __init__(self, env, mode=Mode.GREEDY, epsilon=0.1, ucb_c=0.5, alpha=0.5, tau=0.5):
         """
         Agent that solves the multi armed bandit problem
         :param env: the multi-armed bandit

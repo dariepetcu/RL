@@ -19,7 +19,7 @@ def plot_average(avg_rewards, dist_type, num):
     plt.xlabel("Time-step")
     plt.ylabel("Average Reward")
     plt.ylim([0, 1.1])
-    plt.title("Average reward over " + num + " runs")
+    plt.title("Average reward over " + str(num) + " runs")
     plt.show()
     fname = os.getcwd() + '/plots/avg/' + dist_type.name + '.png'
     fig.savefig(fname)
@@ -51,7 +51,7 @@ def run_and_plot_avg(dist_type=Dist.GAUSS, k=1000, num=1000):
     for mode in Mode:
         rewards = None
         for _ in range(num):
-            agent = Agent(env, mode=mode, epsilon=.1)
+            agent = Agent(env, mode=mode, epsilon=.1, ucb_c=0.4, alpha=0.01, tau=0.05)
             agent.run(verbose=False, plot=False, max_steps=1000)
             if rewards is None:
                 rewards = agent.average_rewards
