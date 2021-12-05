@@ -16,8 +16,8 @@ def run_agent(dist_type, mode, k):
 
 
 def main():
-    dist_type = Dist.BERNOULLI
-    mode = Mode.ACTION_PREFERENCES
+    dist_type = Dist.GAUSS
+    mode = Mode.EPSILON_GREEDY
     k = 100
     run_agent(dist_type, mode, k)
 

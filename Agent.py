@@ -30,7 +30,7 @@ def categorical_draw(pi):
 
 
 class Agent:
-    def __init__(self, env, mode=Mode.GREEDY, epsilon=0.5, ucb_c=0.5, alpha=0.5, tau=0.5):
+    def __init__(self, env, mode=Mode.GREEDY, epsilon=0.7, ucb_c=0.5, alpha=0.5, tau=0.5):
         """
         Agent that solves the multi armed bandit problem
         :param env: the multi-armed bandit
@@ -44,6 +44,7 @@ class Agent:
         self.mode = mode
         # time step, starts at 3 for UCB to avoid subunitary ln
         self.step = 3 if mode == Mode.UCB else 1
+        self.average_rewards = []
 
         # Qt(a) initialized to 0
         self.estimations = [0] * env.arms
@@ -69,13 +70,20 @@ class Agent:
         :param max_steps: Max number of epochs
         Runs the agent on the problem.
         """
+        total_reward = 0
         for self.step in range(self.step, max_steps):
             arm, reward = self.choose_action()
+            total_reward += reward
+            if self.step % 5 == 4:
+                self.average_rewards.append(round(total_reward / self.step, 3))
             # update parameters
             self.update_parameters(arm, reward)
             if verbose:
-                print("Step:", self.step, "; Pulling arm", arm, "; Reward:", round(reward, 3))
+                print("Step:", self.step, "; Pulling arm", arm, "; Reward:", round(reward, 3),
+                      "; current average reward:", round(total_reward / self.step, 3))
         print("Process complete!")
+
+        print(self.average_rewards)
 
     def choose_action(self):
         """
