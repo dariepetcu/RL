@@ -71,11 +71,12 @@ class Agent:
 
     def plot_rewards(self):
         plt.figure(figsize=(10, 8))
-        plt.plot(self.average_rewards, label="UCB")
+        plt.plot(self.average_rewards, label=self.mode.name)
         plt.legend(bbox_to_anchor=(1.3, 0.5))
         plt.xlabel("Time-step")
         plt.ylabel("Average Reward")
-        plt.title("Average reward plotted against time-steps")
+        plt.ylim([0,1.1])
+        plt.title("Average reward plotted against time-steps for " + self.mode.name)
         plt.show()
         fname = os.getcwd() + '/plots/' + self.mode.name + '.png'
         matplotlib.pyplot.savefig(fname)
@@ -96,11 +97,11 @@ class Agent:
             if verbose:
                 print("Step:", self.step, "; Pulling arm", arm, "; Reward:", round(reward, 3),
                       "; current average reward:", round(total_reward / self.step, 3))
-        if verbose:
-            print(self.average_rewards)
+        # if verbose:
+        #     print(self.average_rewards)
         if plot:
             self.plot_rewards()
-        print("Process complete!")
+        # print("Process complete!")
 
     def choose_action(self):
         """
@@ -140,7 +141,7 @@ class Agent:
         :returns selected action
         """
         eps_action = random.uniform(0, 1)
-        if eps_action < self.epsilon:
+        if eps_action > self.epsilon:
             return self.greedy()
         else:
             return random.randint(0, self.env.arms - 1)

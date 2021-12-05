@@ -60,8 +60,8 @@ class Problem:
         Generates reward distributions for each arm. Used for Gaussian distribution.
         """
         for a in range(self.arms):
-            stdev = random.uniform(0, .4)
-            mean = random.uniform(stdev, 1 - stdev)
+            stdev = random.uniform(0, .3)
+            mean = random.uniform(0.5, 1 - stdev)
             if self.verbose:
                 print("ARM {}:\t MEAN: {},\t STD: {}".format(a, round(mean, 3), round(stdev, 3)))
             self.reward_dists.append((mean, stdev))
@@ -78,8 +78,6 @@ class Problem:
             # Gaussian distribution
             mean, stdev = self.reward_dists[a][0], self.reward_dists[a][1]
             reward = random.normal(loc=mean, scale=stdev)
-            if reward < 0:
-                reward = 0
         else:
             # Bernoulli distribution
             reward = int(random.uniform(0, 1) < self.reward_dists[a])
