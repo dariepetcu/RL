@@ -1,15 +1,13 @@
 import math
-import os
 import random
 import sys
-
-import matplotlib.pyplot
 import numpy as np
-import matplotlib.pyplot as plt
 from enum import Enum
 
 
 # enum to store algorithm type
+
+
 class Mode(Enum):
     GREEDY = 0
     EPSILON_GREEDY = 1
@@ -214,7 +212,7 @@ class Agent:
         :param selected_arm: Selected arm
         """
         for arm in range(self.env.arms):
-            regret = (self.optimistic_values[arm] - reward)
+            regret = (reward - self.average_rewards[-1])
             if arm == selected_arm:
                 self.H[arm] += self.alpha * regret * (1 - self.pi[arm])
             else:

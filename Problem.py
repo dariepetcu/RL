@@ -9,28 +9,22 @@ class Dist(Enum):
 
 
 class Problem:
-    def __init__(self, k, dist_type=Dist.GAUSS, verbose=False, reward_dists=None):
+    def __init__(self, k, reward_dists, dist_type=Dist.GAUSS, verbose=False):
         """
         Initializes the multi-armed bandit problem object
         :param k: Number of arms
         :param dist_type: Reward distribution (Gaussian dist_type. by default)
         :param verbose: If True, prints additional information about the problem
-        :param reward_dists: Provide reward dists here. If None, reward dists randomly initialized.
+        :param reward_dists: Provide reward dists here.
         """
         self.arms = k  # number of arms
         self.dist_type = dist_type  # reward distribution type
         self.verbose = verbose
 
-        if reward_dists is not None and dist_type in Dist: # reward distributions provided
+        if dist_type in Dist: # reward distributions provided
             self.reward_dists = reward_dists
             if len(reward_dists) != k:
                 sys.exit("Incorrect number of reward dists provided!")
-        elif dist_type == Dist.GAUSS:
-            self.reward_dists = []  # reward distributions for each arm
-            self.generate_reward_dists()
-        elif dist_type == Dist.BERNOULLI:
-            self.reward_dists = []  # reward probability for each arm
-            self.generate_probabilities()
         else:
             # invalid distribution provided, exit
             sys.exit("Invalid distribution (dist_type = " + str(dist_type) + ") provided!")
@@ -67,23 +61,6 @@ class Problem:
         else:
             max_values = [1] * self.arms
         return max_values
-
-    def generate_probabilities(self):
-        """
-        Generates reward probabilities for each arm. Used for Bernoulli distribution.
-        """
-        for a in range(self.arms):
-            prob = random.uniform(0, 1)
-            self.reward_dists.append(prob)
-
-    def generate_reward_dists(self):
-        """
-        Generates reward distributions for each arm. Used for Gaussian distribution.
-        """
-        for a in range(self.arms):
-            stdev = random.uniform(0, .3)
-            mean = random.uniform(0.5, 1 - stdev)
-            self.reward_dists.append((mean, stdev))
 
     def pull_arm(self, a):
         """
