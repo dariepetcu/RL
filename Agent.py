@@ -225,7 +225,12 @@ class Agent:
         """
         total = 0
         for arm in range(self.env.arms):
-            total += math.exp((self.estimations[arm] / self.tau) if self.mode == Mode.SOFTMAX else (self.H[arm]))
+            if self.mode == Mode.SOFTMAX:
+                total += math.exp(self.estimations[arm] / self.tau)
+            else:
+                total += math.exp(self.H[arm])
 
-        self.pi[selected_arm] = math.exp((self.estimations[selected_arm] / self.tau) if self.mode == Mode.SOFTMAX else
-                                         (self.H[selected_arm])) / total
+        if self.mode == Mode.SOFTMAX:
+            self.pi[selected_arm] = math.exp(self.estimations[selected_arm] / self.tau) / total
+        else:
+            self.pi[selected_arm] = math.exp(self.H[selected_arm]) / total
