@@ -15,7 +15,7 @@ def plot_average(avg_rewards, dist_type, num):
     for i in range(len(avg_rewards)):
         label = Mode(i).name
         plt.plot(avg_rewards[i], label=label)
-    plt.legend(bbox_to_anchor=(1.3, 0.5))
+    plt.legend(loc='upper right')
     plt.xlabel("Time-step")
     plt.ylabel("Average Reward")
     plt.ylim([0, 1.1])
@@ -38,7 +38,7 @@ def run_agent(dist_type, mode, k):
     agent.run(verbose=False, plot=False, max_steps=1000)
 
 
-def run_and_plot_avg(dist_type=Dist.GAUSS, k=1000, num=1000):
+def run_and_plot_avg(dist_type=Dist.GAUSS, k=7, num=1000, modes=Mode.__iter__(),reward_dists=None):
     """
     Runs and plots the average results of multiple agents for every algorithm, on a certain distribution.
     :param dist_type: Reward distribution type
@@ -47,11 +47,12 @@ def run_and_plot_avg(dist_type=Dist.GAUSS, k=1000, num=1000):
     :param modes: Modes to run the simulation with
     """
     avg_rewards = []  # contains average rewards over all agents per mode
-    env = Problem(k, dist_type=dist_type, verbose=False)
-    for mode in Mode:
+
+    env = Problem(k, dist_type=dist_type, verbose=True, reward_dists=reward_dists)
+    for mode in modes:
         rewards = None
         for _ in range(num):
-            agent = Agent(env, mode=mode, epsilon=.1, ucb_c=0.4, alpha=0.01, tau=0.05)
+            agent = Agent(env, mode=mode, epsilon=.1, ucb_c=0.4, alpha=1, tau=5)
             agent.run(verbose=False, plot=False, max_steps=1000)
             if rewards is None:
                 rewards = agent.average_rewards
@@ -64,12 +65,18 @@ def run_and_plot_avg(dist_type=Dist.GAUSS, k=1000, num=1000):
 
 
 def main():
-    dist_type = Dist.GAUSS
-    mode = Mode.EPSILON_GREEDY
+    dist_type = Dist.BERNOULLI
+    modes = [Mode.EPSILON_GREEDY]
+    rewards_gauss = [[0.517, 0.133],
+                     [0.675, 0.061],
+                     [0.611, 0.125],
+                     [0.614, 0.225],
+                     [0.542, 0.291],
+                     [0.617, 0.272],
+                     [0.519, 0.278]]
     k = 7
     num = 1000
-    run_and_plot_avg(dist_type, k, num)
-    # run_agent(dist_type, mode, k)
+    run_and_plot_avg(dist_type, k, num, modes=modes, reward_dists=rewards_gauss)
 
 
 if __name__ == "__main__":
