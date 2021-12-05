@@ -1,8 +1,12 @@
 import math
 import random
 import sys
+
+import matplotlib.pyplot
 import numpy as np
+import matplotlib.pyplot as plt
 from enum import Enum
+
 
 # enum to store algorithm type
 class Mode(Enum):
@@ -64,7 +68,18 @@ class Agent:
 
         self.initialize_estimations()
 
-    def run(self, verbose=False, max_steps=100):
+    def plot_rewards(self):
+        plt.figure(figsize=(10, 8))
+        plt.plot(self.average_rewards, label="UCB")
+        plt.legend(bbox_to_anchor=(1.3, 0.5))
+        plt.xlabel("Time-step")
+        plt.ylabel("Average Reward")
+        plt.title("Average reward plotted against time-steps")
+        plt.show()
+        fname = os.getcwd() + '/plots/' + self.mode.name + '.png'
+        matplotlib.pyplot.savefig(fname)
+
+    def run(self, verbose=False, plot=False, max_steps=1000):
         """
         :param verbose: Prints verbose code
         :param max_steps: Max number of epochs
@@ -74,16 +89,17 @@ class Agent:
         for self.step in range(self.step, max_steps):
             arm, reward = self.choose_action()
             total_reward += reward
-            if self.step % 5 == 4:
-                self.average_rewards.append(round(total_reward / self.step, 3))
+            self.average_rewards.append(round(total_reward / self.step, 3))
             # update parameters
             self.update_parameters(arm, reward)
             if verbose:
                 print("Step:", self.step, "; Pulling arm", arm, "; Reward:", round(reward, 3),
                       "; current average reward:", round(total_reward / self.step, 3))
+        if verbose:
+            print(self.average_rewards)
+        if plot:
+            self.plot_rewards()
         print("Process complete!")
-
-        print(self.average_rewards)
 
     def choose_action(self):
         """
