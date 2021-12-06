@@ -48,6 +48,7 @@ class Agent:
         # time step, starts at 3 for UCB to avoid subunitary ln
         self.step = 3 if mode == Mode.UCB else 1
         self.average_rewards = []
+        self.accuracy = []
 
         # Qt(a) given values in a later function
         self.estimations = None
@@ -74,11 +75,14 @@ class Agent:
         Runs the agent on the problem.
         """
         total_reward = 0
-        max_steps += self.step # adjust for initial step value
+        counter_selected_best = 0
+        max_steps += self.step  # adjust for initial step value
         for self.step in range(self.step, max_steps):
             arm, reward = self.choose_action()
             total_reward += reward
+            counter_selected_best += is_best
             self.average_rewards.append(round(total_reward / self.step, 3))
+            self.accuracy.append(round(counter_selected_best / self.step, 3))
             # update parameters
             self.update_parameters(arm, reward)
             if verbose:
@@ -120,7 +124,9 @@ class Agent:
         chosen.
         :returns selected action
         """
-        best_actions = [random.randint(0,self.env.arms - 1)]
+        # best_actions = [random.randint(0,self.env.arms - 1)]
+        # best_reward = self.estimations[best_actions[0]]
+        best_actions = [0]
         best_reward = self.estimations[best_actions[0]]
 
         for arm in range(self.env.arms):
@@ -176,7 +182,7 @@ class Agent:
         Selects action for action preference algorithm
         :returns selected action
         """
-        best_action = categorical_draw(self.H)
+        best_action = categorical_draw(self.pi)
         return best_action
 
     def update_parameters(self, arm, reward):

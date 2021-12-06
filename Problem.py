@@ -1,5 +1,7 @@
 import sys
 from enum import Enum
+
+import numpy as np
 from numpy import random
 
 
@@ -21,11 +23,7 @@ class Problem:
         self.dist_type = dist_type  # reward distribution type
         self.verbose = verbose
 
-        if reward_dists is not None and dist_type in Dist:  # reward distributions provided
-            self.reward_dists = reward_dists
-            if len(reward_dists) != k:
-                sys.exit("Incorrect number of reward dists provided!")
-        elif dist_type == Dist.GAUSS:
+        if dist_type == Dist.GAUSS:
             self.reward_dists = []  # reward distributions for each arm
             self.generate_reward_dists()
         elif dist_type == Dist.BERNOULLI:
@@ -109,4 +107,6 @@ class Problem:
             except:
                 prob = a
             reward = int(random.uniform(0, 1) < prob)
-        return reward
+
+        is_best = 1 if a == self.best_action() else 0
+        return reward, is_best

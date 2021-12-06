@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 from Problem import Problem, Dist
 
 
-def plot_average(avg_rewards, dist_type, num):
+def plot_average(avg_rewards, dist_type, num, plot_acc):
     """
     Plots a graph for the average performance of multiple agents per distribution.
     :param num: Number of iterations
@@ -19,12 +19,20 @@ def plot_average(avg_rewards, dist_type, num):
         label = Mode(i).name
         plt.plot(avg_rewards[i], label=label)
     plt.legend(loc='upper right')
-    plt.xlabel("Time-step")
-    plt.ylabel("Average Reward")
-    plt.title("Average reward over " + str(num) + " runs")
-    plt.show()
-    fname = os.getcwd() + '/plots/avg/' + dist_type.name + '.png'
-    fig.savefig(fname)
+    if not plot_acc:
+        plt.xlabel("Time-step")
+        plt.ylabel("Average Reward")
+        plt.title("Average reward over " + str(num) + " runs for the " + dist_type.name.title() + " distribution")
+        plt.show()
+        fname = os.getcwd() + '/plots/avg/' + dist_type.name + '.png'
+        fig.savefig(fname)
+    else:
+        plt.xlabel("Time-step")
+        plt.ylabel("Arm accuracy")
+        plt.title("Average accuracy over " + str(num) + " runs for the " + dist_type.name.title() + " distribution")
+        plt.show()
+        fname = os.getcwd() + '/plots/acc/' + dist_type.name + '.png'
+        fig.savefig(fname)
 
 def plot_hyperparameter(avg_rewards, mode, num, tune_space):
     """
@@ -60,6 +68,7 @@ def run_and_plot_avg(dist_type=Dist.GAUSS, k=7, num=1000, reward_dists=None):
     env = Problem(k, dist_type=dist_type, verbose=True, reward_dists=reward_dists)
     for mode in Mode:
         rewards = None
+        selections = None
         for _ in range(num):
             # using optimal parameters based on hyperparameter tuning
             agent = Agent(env, mode=mode, epsilon=.3, ucb_c=0.36, alpha=.02, tau=0.5)
@@ -68,10 +77,17 @@ def run_and_plot_avg(dist_type=Dist.GAUSS, k=7, num=1000, reward_dists=None):
                 rewards = agent.average_rewards
             else:
                 rewards = np.add(rewards, agent.average_rewards)
+            if selections is None:
+                selections = agent.accuracy
+            else:
+                selections = np.add(selections, agent.accuracy)
         rewards = [x / num for x in rewards]
+        selections = [x / num for x in selections]
         avg_rewards.append(rewards)
+        accuracies.append(selections)
         print(mode.name, 'complete!')
-    plot_average(avg_rewards, dist_type, num)
+    plot_average(avg_rewards, dist_type, num, False)
+    plot_average(accuracies, dist_type, num, True)
 
 
 
@@ -152,9 +168,9 @@ def main():
     rewards2 = [0.2,0.3,0.4,0.4,0.5,.6,.85] # bernoulli dist
     k = 7
     num = 1000
-    mode = Mode.UCB
-    run_and_plot_avg(dist_type, k, num, reward_dists=rewards1)
-    #run_tuning(mode,dist_type,reward_dists=rewards2)
+    mode = Mode.ACTION_PREFERENCES
+    run_and_plot_avg(dist_type, k, num)
+    #run_tuning(mode, dist_type)
 
 if __name__ == "__main__":
     main()
