@@ -21,16 +21,39 @@ class Problem:
         self.dist_type = dist_type  # reward distribution type
         self.verbose = verbose
 
-        if dist_type in Dist: # reward distributions provided
+        if reward_dists is not None and dist_type in Dist:  # reward distributions provided
             self.reward_dists = reward_dists
             if len(reward_dists) != k:
                 sys.exit("Incorrect number of reward dists provided!")
+        elif dist_type == Dist.GAUSS:
+            self.reward_dists = []  # reward distributions for each arm
+            self.generate_reward_dists()
+        elif dist_type == Dist.BERNOULLI:
+            self.reward_dists = []  # reward probability for each arm
+            self.generate_probabilities()
         else:
             # invalid distribution provided, exit
             sys.exit("Invalid distribution (dist_type = " + str(dist_type) + ") provided!")
 
         if self.verbose:
             self.print_arms()
+
+    def generate_reward_dists(self):
+        """
+        Generates reward distributions for each arm. Used for Gaussian distribution.
+        """
+        for a in range(self.arms):
+            stdev = 0.2 #random.uniform(0, .3)
+            mean = random.uniform(.3, 1)
+            self.reward_dists.append((mean, stdev))
+
+    def generate_probabilities(self):
+        """
+        Generates reward probabilities for each arm. Used for Bernoulli distribution.
+        """
+        for a in range(self.arms):
+            prob = random.uniform(0, 1)
+            self.reward_dists.append(prob)
 
     def print_arms(self):
         if self.dist_type == (Dist.GAUSS):
@@ -74,6 +97,11 @@ class Problem:
             # Gaussian distribution
             mean, stdev = self.reward_dists[a][0], self.reward_dists[a][1]
             reward = random.normal(loc=mean, scale=stdev)
+            # limit reward to the 0 or 1
+            if reward < 0:
+                reward = 0
+            elif reward > 1:
+                reward = 1
         else:
             # Bernoulli distribution
             try: # convert gauss dist into bernoulli dist
