@@ -49,8 +49,8 @@ class Agent:
         self.step = 3 if mode == Mode.UCB else 1
         self.average_rewards = []
 
-        # Qt(a) initialized to 0
-        self.estimations = [0] * env.arms
+        # Qt(a) given values in a later function
+        self.estimations = None
         # Na(t) starts at 1 to avoid division by 0 in UCB
         self.uncertainties = [1] * env.arms
         # Ht(a) and PIt(a) initialized to equal complementary probabilities
@@ -74,6 +74,7 @@ class Agent:
         Runs the agent on the problem.
         """
         total_reward = 0
+        max_steps += self.step # adjust for initial step value
         for self.step in range(self.step, max_steps):
             arm, reward = self.choose_action()
             total_reward += reward
@@ -115,11 +116,22 @@ class Agent:
 
     def greedy(self):
         """
-        Selects action for greedy algorithm
+        Selects action for greedy algorithm. If multiple arms have the same highest estimated utility, one is randomly
+        chosen.
         :returns selected action
         """
-        best_action = np.argmax(self.estimations)
-        return best_action
+        best_actions = [random.randint(0,self.env.arms - 1)]
+        best_reward = self.estimations[best_actions[0]]
+
+        for arm in range(self.env.arms):
+            reward = self.estimations[arm]
+            if reward > best_reward: # new highest utility arm
+                best_actions = [arm]
+                best_reward = reward
+            elif reward == best_reward: # arm with same highest utility
+                best_actions.append(arm)
+
+        return random.choice(best_actions)
 
     def epsilon_greedy(self):
         """
@@ -137,14 +149,19 @@ class Agent:
         Selects action for UCB algorithm
         :returns selected action
         """
-        best_reward = 0
-        best_action = 0
+        rand_arm = random.randint(0,self.env.arms - 1)
+        best_reward = self.estimations[rand_arm] + self.ucb_c * math.sqrt(np.log(self.step) / self.uncertainties[rand_arm])
+        best_actions = [rand_arm]
+
         for arm in range(self.env.arms):
-            reward = self.estimations[arm] + self.ucb_c * math.sqrt((np.log(self.step) / self.uncertainties[arm]))
-            if best_reward > reward:
-                best_action = arm
+            reward = self.estimations[arm] + self.ucb_c * math.sqrt(np.log(self.step) / self.uncertainties[arm])
+            if round(reward,1) > round(best_reward,1):
+                best_actions = [arm]
                 best_reward = reward
-        return best_action
+            elif round(reward,1) == round(best_reward,1):
+                best_actions.append(arm)
+
+        return random.choice(best_actions)
 
     def softmax(self):
         """
@@ -182,11 +199,9 @@ class Agent:
         """
         Initializes the estimations either optimistically or at a fixed value
         """
-        if self.mode == Mode.OPTIMISTIC:
-            # initialize values as more than max possible reward
+        if self.mode == Mode.OPTIMISTIC or self.mode == Mode.UCB: # initialize values as more than max possible reward
             self.estimations = self.optimistic_values
-        else:
-            # initialize values at a specific value
+        else: # initialize values at a specific value
             self.estimations = [0] * self.env.arms
 
     def update_estimations(self, arm, reward):

@@ -62,7 +62,7 @@ def run_and_plot_avg(dist_type=Dist.GAUSS, k=7, num=1000, reward_dists=None):
         rewards = None
         for _ in range(num):
             # using optimal parameters based on hyperparameter tuning
-            agent = Agent(env, mode=mode, epsilon=.3, ucb_c=0.7, alpha=.02, tau=0.5)
+            agent = Agent(env, mode=mode, epsilon=.3, ucb_c=0.36, alpha=.02, tau=0.5)
             agent.run(verbose=False, plot=False, max_steps=1000)
             if rewards is None:
                 rewards = agent.average_rewards
@@ -84,7 +84,7 @@ def run_tuning(mode, dist_type, reward_dists, tune_num=9, num=100):
     :param tune_num: Number of iterations
     """
     env = Problem(7, reward_dists, dist_type=dist_type, verbose=True)
-    tune_space = np.linspace(.2, .4, num=tune_num, endpoint=True)
+    tune_space = np.linspace(.1, .8, num=tune_num, endpoint=True)
 
     rewards = None
     avg_rewards = []
@@ -148,13 +148,13 @@ def main():
                      [0.542, 0.291],
                      [0.617, 0.272],
                      [0.519, 0.278]]
-    rewards1 = [(0, 1), (1, 1), (5, 2), (-3, 2), (3, 8), (5,2), (-1,1)]
-    rewards2 = [0.1,0.2,0.3,0.4,0.5,.6,.7]
+    rewards1 = [(0, 1), (1, 1), (5, 2), (-3, 2), (3, 8), (5,2), (-1,1)] # gauss dist
+    rewards2 = [0.2,0.3,0.4,0.4,0.5,.6,.85] # bernoulli dist
     k = 7
     num = 1000
     mode = Mode.UCB
-    #run_and_plot_avg(dist_type, k, num, reward_dists=rewards1)
-    run_tuning(mode,dist_type,reward_dists=rewards1)
+    run_and_plot_avg(dist_type, k, num, reward_dists=rewards1)
+    #run_tuning(mode,dist_type,reward_dists=rewards2)
 
 if __name__ == "__main__":
     main()
