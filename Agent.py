@@ -57,8 +57,6 @@ class Agent:
         # Ht(a) and PIt(a) initialized to equal complementary probabilities
         self.H = [1 / env.arms] * env.arms
         self.pi = [1 / env.arms] * env.arms
-        # optimistic values retrieved from Problem.py distributions
-        self.optimistic_values = env.get_max_values()
 
         # hyperparameters:
         self.epsilon = epsilon
@@ -68,7 +66,7 @@ class Agent:
 
         self.initialize_estimations()
 
-    def run(self, verbose=False, plot=False, max_steps=1000):
+    def run(self, verbose=False, max_steps=1000):
         """
         :param verbose: Prints verbose code
         :param max_steps: Max number of epochs
@@ -78,7 +76,7 @@ class Agent:
         counter_selected_best = 0
         max_steps += self.step  # adjust for initial step value
         for self.step in range(self.step, max_steps):
-            arm, reward = self.choose_action()
+            arm, reward, is_best = self.choose_action()
             total_reward += reward
             counter_selected_best += is_best
             self.average_rewards.append(round(total_reward / self.step, 3))
@@ -88,10 +86,6 @@ class Agent:
             if verbose:
                 print("Step:", self.step, "; Pulling arm", arm, "; Reward:", round(reward, 3),
                       "; current average reward:", round(total_reward / self.step, 3))
-        # if verbose:
-        #     print(self.average_rewards)
-        if plot:
-            self.plot_rewards()
         # print("Process complete!")
 
     def choose_action(self):
@@ -115,8 +109,8 @@ class Agent:
                 selected_arm = self.action_pref()
             case _:
                 sys.exit("Invalid selection mode selected!")
-
-        return selected_arm, self.env.pull_arm(selected_arm)
+        reward, is_best = self.env.pull_arm(selected_arm)
+        return selected_arm, reward, is_best
 
     def greedy(self):
         """
@@ -131,10 +125,10 @@ class Agent:
 
         for arm in range(self.env.arms):
             reward = self.estimations[arm]
-            if reward > best_reward: # new highest utility arm
+            if reward > best_reward:  # new highest utility arm
                 best_actions = [arm]
                 best_reward = reward
-            elif reward == best_reward: # arm with same highest utility
+            elif reward == best_reward:  # arm with same highest utility
                 best_actions.append(arm)
 
         return random.choice(best_actions)
@@ -155,16 +149,17 @@ class Agent:
         Selects action for UCB algorithm
         :returns selected action
         """
-        rand_arm = random.randint(0,self.env.arms - 1)
-        best_reward = self.estimations[rand_arm] + self.ucb_c * math.sqrt(np.log(self.step) / self.uncertainties[rand_arm])
+        rand_arm = random.randint(0, self.env.arms - 1)
+        best_reward = self.estimations[rand_arm] + self.ucb_c * math.sqrt(
+            np.log(self.step) / self.uncertainties[rand_arm])
         best_actions = [rand_arm]
 
         for arm in range(self.env.arms):
             reward = self.estimations[arm] + self.ucb_c * math.sqrt(np.log(self.step) / self.uncertainties[arm])
-            if round(reward,1) > round(best_reward,1):
+            if round(reward, 1) > round(best_reward, 1):
                 best_actions = [arm]
                 best_reward = reward
-            elif round(reward,1) == round(best_reward,1):
+            elif round(reward, 1) == round(best_reward, 1):
                 best_actions.append(arm)
 
         return random.choice(best_actions)
@@ -205,9 +200,9 @@ class Agent:
         """
         Initializes the estimations either optimistically or at a fixed value
         """
-        if self.mode == Mode.OPTIMISTIC or self.mode == Mode.UCB: # initialize values as more than max possible reward
-            self.estimations = self.optimistic_values
-        else: # initialize values at a specific value
+        if self.mode == Mode.OPTIMISTIC or self.mode == Mode.UCB:  # initialize values as more than max possible reward
+            self.estimations = [1] * self.env.arms
+        else:  # initialize values at a specific value
             self.estimations = [0] * self.env.arms
 
     def update_estimations(self, arm, reward):

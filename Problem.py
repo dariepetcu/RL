@@ -4,6 +4,8 @@ from enum import Enum
 import numpy as np
 from numpy import random
 
+from numpy import argmax
+
 
 class Dist(Enum):
     GAUSS = 0
@@ -11,13 +13,12 @@ class Dist(Enum):
 
 
 class Problem:
-    def __init__(self, k, reward_dists, dist_type=Dist.GAUSS, verbose=False):
+    def __init__(self, k, dist_type=Dist.GAUSS, verbose=False):
         """
         Initializes the multi-armed bandit problem object
         :param k: Number of arms
         :param dist_type: Reward distribution (Gaussian dist_type. by default)
         :param verbose: If True, prints additional information about the problem
-        :param reward_dists: Provide reward dists here.
         """
         self.arms = k  # number of arms
         self.dist_type = dist_type  # reward distribution type
@@ -41,7 +42,7 @@ class Problem:
         Generates reward distributions for each arm. Used for Gaussian distribution.
         """
         for a in range(self.arms):
-            stdev = 0.2 #random.uniform(0, .3)
+            stdev = 0.2  # random.uniform(0, .3)
             mean = random.uniform(.3, 1)
             self.reward_dists.append((mean, stdev))
 
@@ -53,6 +54,24 @@ class Problem:
             prob = random.uniform(0, 1)
             self.reward_dists.append(prob)
 
+    def best_action(self):
+
+        if self.dist_type == Dist.GAUSS:
+            best_actions = 0
+            best_reward = self.reward_dists[0][0]
+
+            for arm in range(1, self.arms):
+                reward = self.reward_dists[arm][0]
+                if reward > best_reward:  # new highest utility arm
+                    best_actions = [arm]
+                    best_reward = reward
+                elif reward == best_reward:  # arm with same highest utility
+                    best_actions.append(arm)
+        else:  # bernoulli dist
+            best_option = np.argmax(self.reward_dists)
+
+        return best_option
+
     def print_arms(self):
         if self.dist_type == (Dist.GAUSS):
             for i in range(self.arms):
@@ -62,32 +81,17 @@ class Problem:
         else:
             for i in range(self.arms):
                 a = self.reward_dists[i]
-                try: # convert gauss dist into bernoulli dist
+                try:  # convert gauss dist into bernoulli dist
                     prob = a[0]
                 except:
                     prob = a
                 print("ARM {}:\t{}".format(i, round(prob, 3)))
 
-    def get_max_values(self):
-        """
-        Returns the maximum value from an array of 1000 samples from the distribution of each arm.
-        :returns Maximum generated value per arm (list of 1s if Bernoulli dist)
-        """
-        if self.dist_type == Dist.GAUSS:
-            max_values = []
-            for a in range(self.arms):
-                mean, stdev = self.reward_dists[a][0], self.reward_dists[a][1]
-                rewards = random.normal(loc=mean, scale=stdev, size=500)
-                max_values.append(max(rewards))
-        else:
-            max_values = [1] * self.arms
-        return max_values
-
     def pull_arm(self, a):
         """
         Performs a specific action
         :param a: Action to perform
-        :returns Reward for the action
+        :returns Reward for the action and whether the selected action is the best action
         """
         if None:
             return 0
@@ -102,7 +106,7 @@ class Problem:
                 reward = 1
         else:
             # Bernoulli distribution
-            try: # convert gauss dist into bernoulli dist
+            try:  # convert gauss dist into bernoulli dist
                 prob = a[0]
             except:
                 prob = a
