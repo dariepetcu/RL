@@ -7,6 +7,7 @@ from Problem import Problem, Dist
 def plot_average(avg_rewards, dist_type, num, plot_acc):
     """
     Plots a graph for the average performance of multiple agents per distribution.
+    :param plot_acc: If True, plots the average accuracy w.r.t best action. Otherwise plots the average reward
     :param num: Number of iterations
     :param avg_rewards: List of average rewards over time per agent.
     :param dist_type: Distribution type
@@ -32,27 +33,6 @@ def plot_average(avg_rewards, dist_type, num, plot_acc):
         fig.savefig(fname)
 
 
-def plot_hyperparameter(avg_rewards, mode, num, tune_space):
-    """
-    Plots a graph for the average performance of multiple agents per distribution.
-    :param num: Number of iterations
-    :param avg_rewards: List of average rewards over time per agent.
-    """
-    fig = plt.figure(figsize=(10, 8))
-    # plot hyperparam val for 0.1, 0.2, ..
-    i = 0
-    for value in tune_space:
-        plt.plot(avg_rewards[i], label=round(value, 2))
-        i += 1
-    plt.legend(loc='upper right')
-    plt.xlabel("Time-step")
-    plt.ylabel("Average Reward")
-    plt.title("Tuning of parameters for " + mode.name + " over " + str(num) + " runs")
-    plt.show()
-    fname = os.getcwd() + '/plots/tuning/' + mode.name + '.png'
-    fig.savefig(fname)
-
-
 def run_and_plot_avg(dist_type=Dist.GAUSS, k=7, num=1000):
     """
     Runs and plots the average results of multiple agents for every algorithm, on a certain distribution.
@@ -66,9 +46,13 @@ def run_and_plot_avg(dist_type=Dist.GAUSS, k=7, num=1000):
         rewards = None
         selections = None
         for _ in range(num):
+            # initialize bandit problem
             env = Problem(k, dist_type=dist_type)
-            # using optimal parameters based on hyperparameter tuning
+
+            # initialize agent using optimal parameters based on hyperparameter tuning
             agent = Agent(env, mode=mode, epsilon=.38, ucb_c=0.38, alpha=.9, tau=0.12)
+
+            # run agent and update rewards/selection
             agent.run(verbose=False, max_steps=1000)
             if rewards is None:
                 rewards = agent.average_rewards
@@ -78,29 +62,58 @@ def run_and_plot_avg(dist_type=Dist.GAUSS, k=7, num=1000):
                 selections = agent.accuracy
             else:
                 selections = np.add(selections, agent.accuracy)
+        # get average selection/reward
         rewards = [x / num for x in rewards]
         selections = [x / num for x in selections]
         avg_rewards.append(rewards)
         accuracies.append(selections)
         print(mode.name, 'complete!')
+
+    # plot performance
     plot_average(avg_rewards, dist_type, num, False)
     plot_average(accuracies, dist_type, num, True)
 
 
-def run_tuning(mode, dist_type, tune_num=9, num=300):
+def plot_hyperparameter(avg_rewards, mode, num, tune_space):
     """
-    Tunes hyperparameters and plots results
+    Plots a graph for the average performance of multiple agents for one distribution.
+    :param tune_space: Values for which agents were trained
+    :param mode: Mode for which hyperparameters were tuned
+    :param num: Number of iterations
+    :param avg_rewards: List of average rewards over time per agent.
+    """
+    # create figure and plot
+    fig = plt.figure(figsize=(10, 8))
+    # plot hyperparam val for 0.1, 0.2, ..
+    i = 0
+    for value in tune_space:
+        plt.plot(avg_rewards[i], label=round(value, 2))
+        i += 1
+    plt.legend(loc='upper right')
+    plt.xlabel("Time-step")
+    plt.ylabel("Average Reward")
+    plt.title("Tuning of parameters for " + mode.name + " over " + str(num) + " runs")
+    plt.show()
+    # save
+    fname = os.getcwd() + '/plots/tuning/' + mode.name + '.png'
+    fig.savefig(fname)
+
+
+def run_tuning(mode, dist_type, tune_num=10, num=300):
+    """
+    Tunes hyperparameters and plots results.
     :param mode: Mode for which params are tuned
     :param dist_type: Distribution to use
     :param tune_num: Number of hyperparameter values
     :param num: Number of iterations
     """
+    # get hyperparameter tuning values
     tune_space = np.linspace(0, 1, num=tune_num, endpoint=True)
 
     rewards = None
     avg_rewards = []
 
-    match mode:
+    match mode:  # matches correct algorithm, each one is a copy paste for a different parameter
         case Mode.EPSILON_GREEDY:
             for val in tune_space:
                 for _ in range(num):
@@ -150,18 +163,20 @@ def run_tuning(mode, dist_type, tune_num=9, num=300):
                 rewards = [x / num for x in rewards]
                 avg_rewards.append(rewards)
         case _:
-            print("ooga booga you're an idiot")
+            print("Invalid algorithm!")
 
+    # plot hyperparameter graph
     plot_hyperparameter(avg_rewards, mode, num, tune_space)
 
 
 def main():
-    dist_type = Dist.GAUSS
-    k = 7
-    num = 1000
-    mode = Mode.ACTION_PREFERENCES
+    """
+    Runs the multi-armed bandit problem for the given distribution with k arms, num iterations, and plots the results
+    """
+    dist_type = Dist.BERNOULLI  # dist to use for plotting
+    k = 7  # number of arms
+    num = 1000  # number of problem iterations
     run_and_plot_avg(dist_type, k, num)
-    #run_tuning(mode, dist_type)
 
 
 if __name__ == "__main__":

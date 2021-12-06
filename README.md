@@ -1,49 +1,22 @@
-# RL_Practical
-reinforcement learning practical. /git gud for instant homework completion
+# RL Practical - Multi-Armed Bandit Assignment
 
-# Questions for the lab:
-* Do we want **one** multi-armed bandit or *multiple*?
-  
-    Run N k-armed bandits to get N samples of data
-* Is it okay to use (at least as inspiration) code from AI2 assignments?
-  
-    Code written by us fine, code from uni not
-* How complex do we want our environment to be?
-  
-    Just k probabilities stored in array is fine
-* Is the bandit the bandit, or is it the agent that chooses?
-  
-    Bandit = slot machine. k armed = k machines. One agent interacts with all k arms
-* How to select epsilon for eps-greedy?
-  
-    Choose best value from trial and error
-* What the fuck is slide 17
-    
-    Probability to be greedy
+### Farrukh Baratov (s3927083)
+### Darie Petcu (s3990044)
 
-* How to select initial value when not using optimistic initial values?
+##How to run the code
+`Agent.py`, `Problem.py`, and `main.py` all need to be in the same working directory. For saving the plots,
+an extra directory called `plots` is required, with the subdirectories `avg`, `acc`, and `tuning` is required.
 
-    They're just 0
+By default, the program runs with the Gaussian distribution and standard hyperparameters, going through all
+action selection algorithms one by one. The problem has 7 arms by default Each algorithm is tested for 1000
+timesteps, and the experiment is run 1000 times. The terminal will display a message whenever one of the 
+algorithms is done with all iterations. After the process has finished, the plots for average rewards
+and accuracies will be saved in the `/acc` and `/avg` subdirectories of the working directory.
 
-* Gaussian distr: do we need to have different values for both the mean and SD
-  or can we just use different means and one SD
-  
-    use diff means AND SD. otherwise "try and see what happens ;)"
+The function `run_tuning` plots the results of an algorithm with different values for its hyperparameter. Plots
+will be saved in the directory `plots/tuning`. This function is not called by default.
 
-
-* What to do after using optimistic initial values? greedy or?
-
-  yes. greedy, and if time allows for it, try other stuff as well
-
-* Do we need the incremental update of sample-average method for anything apart from optimization?
-
-  incremental is more optimized
-
-* UCB: What is Na(t)?
-
-  number of times a was chosen after t timesteps
-
-* optimistic initial values are set higher than the highest possible reward, manually. the value itself depends on the
-  reward implementation
-  
-* fill between: matplotlib to show some statisticsy stuff
+The following command runs the code:
+```
+python3 main.py
+```

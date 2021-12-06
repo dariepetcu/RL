@@ -5,10 +5,10 @@ import numpy as np
 from enum import Enum
 
 
-# enum to store algorithm type
-
-
 class Mode(Enum):
+    """
+    Enum to represent selection mode/algorithm
+    """
     GREEDY = 0
     EPSILON_GREEDY = 1
     OPTIMISTIC = 2
@@ -17,8 +17,13 @@ class Mode(Enum):
     ACTION_PREFERENCES = 5
 
 
-# Arm selection based on Softmax probability
 def categorical_draw(pi):
+    """
+    Arm selection based on pi probability. Algorithm taken from
+    https://medium.com/analytics-vidhya/multi-armed-bandit-analysis-of-softmax-algorithm-e1fa4cb0c422
+    :param pi:
+    :return:
+    """
     z = random.random()
     cum_prob = 0.0
 
@@ -33,18 +38,20 @@ def categorical_draw(pi):
 
 
 class Agent:
-    def __init__(self, env, mode=Mode.GREEDY, epsilon=0.1, ucb_c=0.5, alpha=0.5, tau=0.5):
+    def __init__(self, env, mode=Mode.GREEDY, epsilon=0.38, ucb_c=0.38, alpha=0.9, tau=0.12):
         """
         Agent that solves the multi armed bandit problem
         :param env: the multi-armed bandit
         :param mode: selected algorithm
-        :param epsilon: for eps-greedy
+        :param epsilon: epsilon hyperparameter for eps-greedy
         :param ucb_c: c hyperparameter for UCB
         :param alpha: alpha hyperparameter for action preference
         :param tau: hyperparameter for softmax
         """
+
         self.env = env
         self.mode = mode
+
         # time step, starts at 3 for UCB to avoid subunitary ln
         self.step = 3 if mode == Mode.UCB else 1
         self.average_rewards = []
@@ -52,8 +59,10 @@ class Agent:
 
         # Qt(a) given values in a later function
         self.estimations = None
+
         # Na(t) starts at 1 to avoid division by 0 in UCB
         self.uncertainties = [1] * env.arms
+
         # Ht(a) and PIt(a) initialized to equal complementary probabilities
         self.H = [1 / env.arms] * env.arms
         self.pi = [1 / env.arms] * env.arms
@@ -149,11 +158,14 @@ class Agent:
         Selects action for UCB algorithm
         :returns selected action
         """
+
+        # initialize starting values
         rand_arm = random.randint(0, self.env.arms - 1)
         best_reward = self.estimations[rand_arm] + self.ucb_c * math.sqrt(
             np.log(self.step) / self.uncertainties[rand_arm])
         best_actions = [rand_arm]
 
+        # iterate to find actions with highest rewards
         for arm in range(self.env.arms):
             reward = self.estimations[arm] + self.ucb_c * math.sqrt(np.log(self.step) / self.uncertainties[arm])
             if round(reward, 1) > round(best_reward, 1):
@@ -162,6 +174,7 @@ class Agent:
             elif round(reward, 1) == round(best_reward, 1):
                 best_actions.append(arm)
 
+        # randomly return one of the highest-reward actions
         return random.choice(best_actions)
 
     def softmax(self):
@@ -225,6 +238,7 @@ class Agent:
     def update_preferences(self, selected_arm, reward):
         """
         Updates the action preferences of all arms for action preferences
+        :param reward: Reward from selected action
         :param selected_arm: Selected arm
         """
         for arm in range(self.env.arms):
@@ -241,12 +255,12 @@ class Agent:
         """
         total = 0
         for arm in range(self.env.arms):
-            if self.mode == Mode.SOFTMAX:
+            if self.mode == Mode.SOFTMAX:  # if softmax algorithm
                 total += math.exp(self.estimations[arm] / self.tau)
-            else:
+            else:  # if action preferences
                 total += math.exp(self.H[arm])
 
-        if self.mode == Mode.SOFTMAX:
+        if self.mode == Mode.SOFTMAX:  # if softmax algorithm
             self.pi[selected_arm] = math.exp(self.estimations[selected_arm] / self.tau) / total
-        else:
+        else:  # if action preferences algorithm
             self.pi[selected_arm] = math.exp(self.H[selected_arm]) / total
