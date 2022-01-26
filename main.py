@@ -16,7 +16,7 @@ def main():
 
     env = make("connectx", {"rows": 6, "columns": 7, "inarow": 4}, debug=True)
     agent = Agent(env, 2)
-    # Training agent in first position (player 1) against the default random agent.
+    # Training agent in first position (mark 1) against the default random agent.
     trainer = env.train([None, agent.lmaolol])
 
     obs = trainer.reset()
@@ -34,7 +34,7 @@ def main():
     # env.render(mode="ipython", width=500, height=450)
     # # Play as first position against random agent.
     # trainer = env.train([None, "random"])
-    # # "None" represents which agent you'll manually play as (first or second player).
+    # # "None" represents which agent you'll manually play as (first or second mark).
     # env.play([None, "negamax"], width=500, height=450)
     # observation = trainer.reset()
     #

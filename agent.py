@@ -15,6 +15,7 @@ class Agent:
         :param columns: Number of columns
         :param goal: Number of pieces in a row required to win
         """
+
         self.mark = mark
         self.columns = columns
         self.rows = rows
