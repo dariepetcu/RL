@@ -24,7 +24,6 @@ def main():
         env.render()
         action = [c for c in range(len(obs.board)) if obs.board[c] == 0][0]  # Action for the agent being trained.
         obs, reward, done, info = trainer.step(action)
-        print(env.)
         print(reward)
         if done:
             obs = trainer.reset()
