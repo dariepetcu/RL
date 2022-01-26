@@ -2,14 +2,33 @@ import sys
 import numpy as np
 from kaggle_environments import evaluate, make, utils, agent
 
+from agent import Agent
+
 
 def main():
-    env = make("connectx", debug=True)
+    """env = make("connectx", debug=True)
     # help(env)
     env.render(mode="ipython", width=500, height=450)
     env.run(["negamax", "random"])
     env.render(mode="ipython", width=500, height=450)
+    env.play()"""
     # env.reset()
+
+    env = make("connectx", {"rows": 6, "columns": 7, "inarow": 4}, debug=True)
+    agent = Agent(env, 2)
+    # Training agent in first position (player 1) against the default random agent.
+    trainer = env.train([None, agent.lmaolol])
+
+    obs = trainer.reset()
+    for _ in range(100):
+        env.render()
+        action = [c for c in range(len(obs.board)) if obs.board[c] == 0][0]  # Action for the agent being trained.
+        obs, reward, done, info = trainer.step(action)
+        print(reward)
+        if done:
+            obs = trainer.reset()
+
+    env.render(mode="ansi")
     # env.run([my_agent, my_agent])
     # env.render(mode="ipython", width=500, height=450)
     # # Play as first position against random agent.
@@ -28,12 +47,6 @@ def main():
     # # Play as the first agent against default "random" agent.
     # env.run([my_agent, "random"])
     # env.render(mode="ipython", width=500, height=450)
-
-# This agent random chooses a non-empty column.
-def my_agent(observation, configuration):
-    from random import choice
-
-    return choice([c for c in range(configuration.columns) if observation.board[c] == 0])
 
 if __name__ == "__main__":
     main()

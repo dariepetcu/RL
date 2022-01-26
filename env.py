@@ -2,6 +2,8 @@ import sys
 
 import numpy as np
 
+
+
 class ConnectX:
 
     def __init__(self, dim=(7, 6), goal=4):
@@ -10,11 +12,11 @@ class ConnectX:
         :param dim: (x,y) tuple of game dimensions
         :param goal: number of connected pieces required
         """
-        self.dimx = dim[0] # sets x dimension
-        self.dimy = dim[1] # sets y dimension
-        self.goal = goal # sets goal
-        self.board = np.empty(self.dimx, self.dimy) # initializes empty board
-        self.turn = 0 # number of turns since start
+        self.dimx = dim[0]  # sets x dimension
+        self.dimy = dim[1]  # sets y dimension
+        self.goal = goal  # sets goal
+        self.board = np.empty(self.dimx, self.dimy)  # initializes empty board
+        self.turn = 0  # number of turns since start
 
     def valid_move(self, column):
         """
@@ -27,40 +29,44 @@ class ConnectX:
         else:
             return False
 
-    def four_in_a_row(self, row, column):
-        """
-        Checks if the winning condition has been fulfilled.
-        :param row:
-        :param column:
-        :return:
-        """
-        # Get a list of horizontal, vertical, and diagonal lines involving the piece that was just added
-        lines = []
+    def drop_piece(self, col, piece, config):
+        next_grid = self.board.copy()
+        for y in range(self.dimy):
+            if next_grid[col][y] is None:
+                next_grid[col][y] = None
+        return next_grid
 
-        # Horizontal & vertical
-        lines.append(self.board[:, column])
-        lines.append(self[row])
-
-        # Diagonal
-        w = self.shape[1] - 1
-        h = self.shape[0] - 1
-        distance_to_left = min([row, column]) * -1
-        distance_to_right = min([h - row, w - column]) + 1
-        lines.append([self[row + n, column + n] for n in range(distance_to_left, distance_to_right)])
-        distance_to_left = min([row, w - column]) * -1
-        distance_to_right = min([h - row, column]) + 1
-        lines.append([self[row + n, column - n] for n in range(distance_to_left, distance_to_right)])
-
-        # Split each list into chunks of four and check each to see if all values are a) the same and b) not zero
-        fours = []
-        for line in lines:
-            for n in range(len(line) - 3):
-                four = line[n:n + 4]
-                if (four[0] == four).all() & (four[0] != 0):
+    # Returns True if dropping piece in column results in game win
+    def check_winning_move(self, config, col, piece):
+        # Convert the board to a 2D grid
+        grid = np.asarray(self.board).reshape(config.rows, config.columns)
+        next_grid = self.drop_piece( col, piece, config)
+        # horizontal
+        for row in range(config.rows):
+            for col in range(config.columns - (config.inarow - 1)):
+                window = list(next_grid[row, col:col + config.inarow])
+                # print(config.inarow,"\n",window)
+                if window.count(piece) == config.inarow:
+                    return True
+        # vertical
+        for row in range(config.rows - (config.inarow - 1)):
+            for col in range(config.columns):
+                window = list(next_grid[row:row + config.inarow, col])
+                if window.count(piece) == config.inarow:
+                    return True
+        # positive diagonal
+        for row in range(config.rows - (config.inarow - 1)):
+            for col in range(config.columns - (config.inarow - 1)):
+                window = list(next_grid[range(row, row + config.inarow), range(col, col + config.inarow)])
+                if window.count(piece) == config.inarow:
+                    return True
+        # negative diagonal
+        for row in range(config.inarow - 1, config.rows):
+            for col in range(config.columns - (config.inarow - 1)):
+                window = list(next_grid[range(row, row - config.inarow, -1), range(col, col + config.inarow)])
+                if window.count(piece) == config.inarow:
                     return True
         return False
-
-
 
     def add_piece(self, column, player):
         """
@@ -76,7 +82,7 @@ class ConnectX:
             for y in range(self.dimy):
                 if self.board[column][y] is None:
                     self.board[column][y] = player
-                    if self.is_win((column, y)):
+                    if self.check_winning_move((column, y)):
                         return "WIN"
                     return
 
