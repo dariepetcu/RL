@@ -22,6 +22,7 @@ class Agent:
         self.goal = goal
         self.board = board
         self.current_sel = 0
+        self.Q
 
     def lmaolol(self, obs, config):
         self.current_sel += 1
