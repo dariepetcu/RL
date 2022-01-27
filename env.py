@@ -1,5 +1,4 @@
 import sys
-from random import shuffle, choice
 
 
 class ConnectX:
@@ -11,11 +10,11 @@ class ConnectX:
         :param goal: number of connected pieces required
         """
         self._moves = []  # all _moves so far
-        self._history = [] # state history
         self.columns = dim[0]  # sets column count
         self.rows = dim[1]  # sets row count
         self.goal = goal  # sets goal
         self._board = ['0'] * self.columns * self.rows  # game board
+        self._history = [self._board]  # state history
         self.turn = 0  # number of turns since start
         self._winner = None  # mark that won the game
 
@@ -27,6 +26,8 @@ class ConnectX:
         self._board = ['0'] * self.columns * self.rows  # game board
         self.turn = 0  # number of turns since start
         self._winner = None  # mark that won the game
+        self._moves = []
+        self._history = [self._board]
 
     def valid_moves(self):
         """
@@ -196,7 +197,8 @@ class ConnectX:
             elif '0' not in self._board:  # check if its a draw
                 self._winner = "DRAW"
 
-            self._moves.append((mark,column))  # update move history
+            self._moves.append((mark, column))  # update move history
+            self._history.append(self._board) # update state history
             return True
         else:
             print(f"{column}: Invalid move!")
@@ -222,11 +224,9 @@ class ConnectX:
         :param mark: Agent name
         :returns Move success, Result state, reward, and whether or not the game is done.
         """
-        success = self.add_piece(mark, col) # adds piece, updates winner, turn, board, returns move validity
-        next_state = self.get_state(mark=mark) # board state from mark pov after previous move attempted
-        reward = self.get_reward(mark) # mark "reward" for the state
-        done = (self._winner is not None) # whether or not game is complete
-        return success, next_state, reward, done
+        success = self.add_piece(mark, col)  # adds piece, updates winner, turn, board, returns move validity
+        reward = self.get_reward(mark)  # mark "reward" for the state
+        return success, reward
 
     def get_winner(self):
         """
@@ -235,26 +235,35 @@ class ConnectX:
         """
         return self._winner
 
-    def get_moves(self):
+    def get_move(self, traceback=0):
         """
-        Getter. Returns move history of all players.
-        :returns Move history in form (mark,move)
+        Getter. Returns a specific moe from the move history
+        :returns Move at turn t (mark,move)
         """
-        return self._moves
+        idx = -1 - traceback  # traceback of most recent state.
+        if self.turn - idx < 0:
+            idx = 0
+
+        return self._moves[idx]
 
     def get_state(self, mark=None, traceback=0, string=True):
         """
-        Gets state of the _board as a string or as a list
+        Gets state of the _board from the state history as a string or as a list
         :param mark: Player mark. If given, state replaces mark's mark with "1", and the adversary's mark with "2".
         Standardizes state representations for game-play.
         :param traceback: How many states ago the retrieved state is. traceback=0 is the most recent state.
         :param string: State representation. If True, returns string, else returns list.
         :returns State represented as string or list
         """
-        idx = -1 - traceback # traceback of most recent state.
+        idx = -1 - traceback  # traceback of most recent state.
+        if self.turn + 1 - idx < 0:
+            idx = 0
+
+        board_state = self._history[idx]
+
         if mark is not None:
             state = []
-            for p in self._board:
+            for p in board_state:
                 if p == '0':
                     state.append("0")
                 elif p == mark:
@@ -262,7 +271,7 @@ class ConnectX:
                 else:
                     state.append("2")
         else:
-            state = self._board.copy()
+            state = board_state.copy()
 
         if string:
             return "".join(state)
@@ -277,9 +286,18 @@ class ConnectX:
             print('+---', end='')
         print('+')
 
+    def copy_end_state(self):
+        """
+        Creates a copy of the end state at the end of the history state.
+        """
+        self._history.append(self._history[-1])
+        self._moves.append(self._moves[-1])
+        self.turn += 1
+
     def print_state(self):
         """
-        Pretty prints the current state of the _board, the turn number, most recent move and a _winner, if one is present.
+        Pretty prints the current state of the _board, the turn number,
+        most recent move and a _winner, if one is present.
         """
         i = 0
         print(f"TURN {self.turn}. COL: {self._moves[-1]}")
