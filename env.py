@@ -1,6 +1,5 @@
 import sys
-
-import numpy as np
+from random import shuffle, choice
 
 
 class ConnectX:
@@ -15,9 +14,28 @@ class ConnectX:
         self.columns = dim[0]  # sets column count
         self.rows = dim[1]  # sets row count
         self.goal = goal  # sets goal
-        self._board = ['0'] * self.columns * self.rows # game board
+        self._board = ['0'] * self.columns * self.rows  # game board
         self.turn = 0  # number of turns since start
         self._winner = None  # player that won the game
+
+    def run(self, agent0, agent1=None, render=False):
+        """
+        Runs game with given agents.
+        :param agent0: Required agent.
+        :param agent1: Optional agent. If None chosen, agent that randomly chooses is selected.
+        :param render: If True, prints board state and other info at every turn. Prints nothing if False.
+        :returns The winner of the game.
+        """
+        agents = [agent0, agent1]
+        shuffle(agents)  # shuffles agent order to make it random.
+        while self._winner is None:
+            for ag in agents:
+                if ag is None:
+                    vmoves = self.valid_moves()
+                    self.add_piece(choice(vmoves), "R")
+                else:
+                    self.add_piece(ag.play(), ag.name)
+        return self._winner
 
     def reset(self):
         """

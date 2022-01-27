@@ -48,7 +48,14 @@ class Agent:
         else:
             return -1
 
-    def new_match(self):
+    def play(self):
+        """
+        Makes a decision of which column to play based on the current state of the game.
+        :returns column decision.
+        """
+        return "69 lol"
+
+    def reset(self):
         self.action_history.clear()
         self.state_history.clear()
         self.G = []
