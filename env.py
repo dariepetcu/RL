@@ -11,46 +11,13 @@ class ConnectX:
         :param goal: number of connected pieces required
         """
         self._moves = []  # all _moves so far
+        self._history = [] # state history
         self.columns = dim[0]  # sets column count
         self.rows = dim[1]  # sets row count
         self.goal = goal  # sets goal
         self._board = ['0'] * self.columns * self.rows  # game board
         self.turn = 0  # number of turns since start
         self._winner = None  # mark that won the game
-
-    def self_play(self, agent, render=False):
-        """
-        Runs game with agent self-play.
-        :param agent: Agent that plays against itself
-        :param render: If True, prints board state and other info at every turn. Prints nothing if False.
-        :returns the winner of the game.
-        """
-        while self._winner is None:
-
-
-
-    def run(self, agent0, agent1=None, render=False):
-        """
-        Runs game with given agents.
-        :param agent0: Required agent.
-        :param agent1: Optional agent. If None chosen, self-play is used.
-        If "random" selected, agent plays against a randomly selecting agent.
-        :param render: If True, prints board state and other info at every turn. Prints nothing if False.
-        :returns The winner of the game.
-        """
-        if agent1 is None:
-            self.self_play(agent0, render)
-
-        agents = [agent0, agent1]
-        shuffle(agents)  # shuffles agent order to make it random.
-        while self._winner is None:
-            for ag in agents:
-                if ag is "random":
-                    vmoves = self.valid_moves()
-                    self.add_piece(choice(vmoves), "R")
-                else:
-                    self.add_piece(ag.play(), ag.name)
-        return self._winner
 
     def reset(self):
         """
@@ -97,7 +64,7 @@ class ConnectX:
     def _get_ndiag(self, pos):
         """
         Get the negative diagonal line of the new piece
-        :param pos: Piece position on _board as index of self._board
+        :param pos: Piece position on _board as index of game._board
         :returns List of pieces
         """
         i = pos
@@ -123,7 +90,7 @@ class ConnectX:
     def _get_pdiag(self, pos):
         """
         Get the positive diagonal line of the new piece
-        :param pos: Piece position on _board as index of self._board
+        :param pos: Piece position on _board as index of game._board
         :returns List of pieces
         """
 
@@ -150,7 +117,7 @@ class ConnectX:
     def _get_row(self, pos):
         """
         Gets the pieces in the piece row
-        :param pos: Piece position on _board as index of self._board
+        :param pos: Piece position on _board as index of game._board
         :returns List of pieces in the row
         """
 
@@ -170,7 +137,7 @@ class ConnectX:
     def _get_col(self, pos):
         """
         Gets the pieces in the piece column
-        :param pos: Piece position on _board as index of self._board
+        :param pos: Piece position on _board as index of game._board
         :returns List of pieces in the columns
         """
         col_pieces = []
@@ -184,7 +151,7 @@ class ConnectX:
     def _check_win(self, pos, mark):
         """
         Checks if the mark has won based on the new piece position
-        :param pos: Piece position on _board as index of self._board
+        :param pos: Piece position on _board as index of game._board
         :param mark: Player mark
         :returns True if it is a winning move, False if it is not a winning move
         """
@@ -248,24 +215,18 @@ class ConnectX:
         else:
             return -1
 
-    def step(self, player):
+    def step(self, col, mark):
         """
         Runs one step of the game for the given agent. Updates board and provides additional information.
-        :param player: Agent
+        :param col: Agent's select column
+        :param mark: Agent name
         :returns Move success, Result state, reward, and whether or not the game is done.
         """
-        col = player.play()
-        success = self.add_piece(player, col) # adds piece, updates winner, turn, board, returns move validity
-        next_state = self.get_state(mark=player.name) # board state from mark pov after previous move attempted
-        reward = self.get_reward(player.name) # mark "reward" for the state
+        success = self.add_piece(mark, col) # adds piece, updates winner, turn, board, returns move validity
+        next_state = self.get_state(mark=mark) # board state from mark pov after previous move attempted
+        reward = self.get_reward(mark) # mark "reward" for the state
         done = (self._winner is not None) # whether or not game is complete
         return success, next_state, reward, done
-
-agent_moves = step(agent)
-opp.update_values()
-opponent_moves = step(opp)
-agent.update(agent.state,)
-
 
     def get_winner(self):
         """
@@ -281,15 +242,16 @@ agent.update(agent.state,)
         """
         return self._moves
 
-    def get_state(self, mark=None, string=True):
+    def get_state(self, mark=None, traceback=0, string=True):
         """
         Gets state of the _board as a string or as a list
         :param mark: Player mark. If given, state replaces mark's mark with "1", and the adversary's mark with "2".
-        Standardizes state representations for self-play.
+        Standardizes state representations for game-play.
+        :param traceback: How many states ago the retrieved state is. traceback=0 is the most recent state.
         :param string: State representation. If True, returns string, else returns list.
         :returns State represented as string or list
         """
-
+        idx = -1 - traceback # traceback of most recent state.
         if mark is not None:
             state = []
             for p in self._board:

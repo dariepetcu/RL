@@ -43,26 +43,6 @@ class Agent:
         self.mode = mode
         self.G = []
 
-    def play(self):
-        """
-        Makes a decision of which column to play based on the current state of the game.
-        :returns column decision.
-        """
-        col = None
-        """
-        state = begin()
-        action = select_action()
-        state_history.append(state)
-        action_history.append(action)
-        state, reward, done = env.step()
-        while not done:
-            prev_state = self.state_history[-1]
-            update_estimates(prev_state, action, reward, state, next_action)
-            next_state, next_action, reward, done = step(action)
-            
-        """
-        return col
-
     def select_action(self):
         match self.exploration:
             case Expl.GREEDY:
