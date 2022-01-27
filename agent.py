@@ -63,14 +63,14 @@ class Agent:
         reward, is_best = self.env.pull_arm(selected_arm)
         return selected_arm, reward, is_best
 
-    def update_estimates(self):
+    def update_estimates(self, reward):
         match self.mode:
             case Mode.Q:
-                self.Q()
+                self.QLearn(reward)
             case Mode.SARSA:
-                self.sarsa()
+                self.sarsa(reward)
             case Mode.MC:
-                self.montecarlo()
+                self.montecarlo(reward)
 
     def reset(self):
         self.action_history.clear()
@@ -98,9 +98,11 @@ class Agent:
             elif self.mode == Mode.SARSA:
                 pass
 
+    def QLearn(self, reward):
+
     def update_SARSA(self, time):
-        state = self.game.get_state(player=self.name)
-        stateNew = state
+        next_state = self.game.get_state(mark = self.name)
+z        stateNew = state
         actionNew = 0
         for action in self.game.valid_moves():
             self.Q(state, action) = self.Q(state, action) + self.alpha *\
