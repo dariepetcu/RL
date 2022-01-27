@@ -22,7 +22,7 @@ def main():
     obs = trainer.reset()
     for _ in range(100):
         env.render()
-        action = [c for c in range(len(obs.board)) if obs.board[c] == 0][0]  # Action for the agent being trained.
+        action = [c for c in range(len(obs._board)) if obs._board[c] == 0][0]  # Action for the agent being trained.
         obs, reward, done, info = trainer.step(action)
         print(reward)
         if done:

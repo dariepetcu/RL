@@ -11,144 +11,192 @@ class ConnectX:
         :param dim: (x,y) tuple of game dimensions
         :param goal: number of connected pieces required
         """
-        self.moves = []  # all moves so far
+        self._moves = []  # all _moves so far
         self.columns = dim[0]  # sets column count
         self.rows = dim[1]  # sets row count
         self.goal = goal  # sets goal
-        self.board = [[None] * self.columns] * self.columns
+        self._board = ['0'] * self.columns * self.rows # game board
         self.turn = 0  # number of turns since start
-        self.winner = None  # player that won the game
+        self._winner = None  # player that won the game
+
+    def reset(self):
+        """
+        Resets the game to the starting specifications.
+        """
+
+        self._board = ['0'] * self.columns * self.rows  # game board
+        self.turn = 0  # number of turns since start
+        self._winner = None  # player that won the game
 
     def valid_moves(self):
         """
-        Returns list of legal moves.
+        Returns list of legal _moves.
         :returns list of legal/valid columns with space in them
         """
         legal = []
         for c in range(self.columns):
-            if None in self.board[c]:
-                legal.append(c)
-        print(legal)
+            i = c
+            while i < len(self._board):
+                if self._board[i] == '0':
+                    legal.append(c)
+                    break
+                i += self.columns
+
         return legal
 
-    def drop_piece(self, col, piece):
+    def _drop_piece(self, col, piece):
         """
-        Creates a board state with a new piece added
+        Updates a game state with a new piece added
         :param col: Piece column
         :param piece: Piece mark
         :returns Row of the new piece
         """
-        for row in range(self.rows):
-            r = self.rows - row
-            if self.board[col][r] is None:
-                self.board[col][r] = piece
-                return r
+        i = col
+        free = col  # highest-up free spot in column
+        while i < len(self._board):
+            if self._board[i] == '0':
+                free = i
+            i += self.columns
 
-    def get_negative_diagonal(self, prow, pcol):
+        self._board[free] = piece
+        return free
+
+    def _get_ndiag(self, pos):
         """
         Get the negative diagonal line of the new piece
-        :param prow: Piece row
-        :param pcol: Piece column
+        :param pos: Piece position on _board as index of self._board
         :returns List of pieces
         """
-        nd_pieces = []  # positive diagonal pieces
+        i = pos
+        step = self.columns + 1
 
-        ndrow = prow
-        ndcol = pcol
+        nd_pieces = []
 
-        while ndrow > 0 and ndcol > 0:
-            ndrow -= 1
-            ndcol -= 1
+        while i % self.columns != 0 and not i < self.columns:
+            i -= step
 
-        while ndrow < self.rows and ndcol < self.columns:
-            nd_pieces.append(self.board[ndcol][ndrow])
-            ndcol += 1
-            ndrow += 1
+        count = 0
+        while i < len(self._board) and count < self.columns:
+            nd_pieces.append(self._board[i])
+            # check if the counter isn't "looping back" to the first row from the last
+            if i % self.columns > (i + step) % self.columns:
+                break
+            else:
+                i += step
+                count += 1
 
         return nd_pieces
 
-    def get_positive_diagonal(self, prow, pcol):
+    def _get_pdiag(self, pos):
         """
         Get the positive diagonal line of the new piece
-        :param prow: Piece row
-        :param pcol: Piece column
+        :param pos: Piece position on _board as index of self._board
         :returns List of pieces
         """
-        pd_pieces = []  # positive diagonal pieces
 
-        pdrow = prow
-        pdcol = pcol
+        pd_pieces = []
+        i = pos
+        step = self.columns - 1
 
-        while pdrow < self.rows and pdcol > 0:
-            pdrow += 1
-            pdcol -= 1
+        while i % self.columns != 0 and not i < self.columns:
+            i -= step
 
-        while pdrow > 0 and pdcol < self.columns:
-            pd_pieces.append(self.board[pdcol][pdrow])
-            pdrow -= 1
-            pdcol += 1
+        count = 0
+        while i < len(self._board) and count < self.columns:
+            pd_pieces.append(self._board[i])
+
+            # check if the counter isn't "looping back" to the last row from the first
+            if i % self.columns < (i + step) % self.columns:
+                break
+            else:
+                i += step
+                count += 1
 
         return pd_pieces
 
-    def get_row(self, prow, pcol):
+    def _get_row(self, pos):
         """
         Gets the pieces in the piece row
-        :param prow: Piece row
-        :param pcol: Piece column
+        :param pos: Piece position on _board as index of self._board
         :returns List of pieces in the row
         """
 
         row_pieces = []  # row pieces
-        for c in range(self.columns):
-            row_pieces.append(self.board[c][prow])
+        i = pos
+
+        while i % self.columns != 0:
+            i -= 1
+
+        start = i
+        while i < len(self._board) and i - start < self.columns:
+            row_pieces.append(self._board[i])
+            i += 1
 
         return row_pieces
 
+    def _get_col(self, pos):
+        """
+        Gets the pieces in the piece column
+        :param pos: Piece position on _board as index of self._board
+        :returns List of pieces in the columns
+        """
+        col_pieces = []
+        i = pos % self.columns
+        while i < len(self._board):
+            col_pieces.append(self._board[i])
+            i += self.columns
+        return col_pieces
+
     # Returns True if dropping piece in column results in game win
-    def check_win(self, prow, pcol, mark):
+    def _check_win(self, pos, mark):
         """
         Checks if the player has won based on the new piece position
-        :param prow: Row of new piece
-        :param pcol: Column of new piece
+        :param pos: Piece position on _board as index of self._board
         :param mark: Player mark
         :returns True if it is a winning move, False if it is not a winning move
         """
 
-        col_pieces = self.board[pcol]
-        win = [mark] * self.goal
-
-        # check horizontal/vertical
-        if win in col_pieces or win in self.get_row(prow, pcol):
-            return True
-
-        # check diagonals
-        if win in self.get_negative_diagonal(prow, pcol) or win in self.get_positive_diagonal(prow, pcol):
-            return True
+        get_sublist = [self._get_row, self._get_col, self._get_ndiag, self._get_pdiag]
+        for get in get_sublist:
+            sublist = get(pos)
+            i, j = 0, 0  # sublist counter and win counter
+            while i < len(sublist) and j < self.goal:
+                if sublist[i] == mark:
+                    j += 1
+                else:
+                    j = 0
+                i += 1
+            if j == self.goal:
+                return True
 
         return False
 
     def add_piece(self, column, player):
         """
-        Attempts to add a piece to the board.
-        :param column: Column to add a board to.
-        :param player: Mark of the mark adding a piece.
+        Attempts to add a piece to the game.
+        :param column: Column to add a game to.
+        :param player: Single-character mark of the player adding a piece.
         :returns True
         """
 
-        if self.winner is not None:
+        if self._winner is not None:
             return False
 
         if len(player) > 1:
             sys.exit(f"{player}: name too long!")
         if player == "0":
-            print("Player name cannot be 0!")
+            sys.exit("Player name cannot be 0!")
 
         if column in self.valid_moves():
-            prow = self.drop_piece(column, player)
-            self.turn += 1
-            if self.check_win(prow, column, player):
-                self.winner = player
-            self.moves.append(column)
+            pos = self._drop_piece(column, player)  # update _board
+            self.turn += 1  # update turn count
+
+            if self._check_win(pos, player):  # check if this is a winning move
+                self._winner = player
+            elif '0' not in self._board:  # check if its a draw
+                self._winner = "DRAW"
+
+            self._moves.append(column)  # update move history
             return True
         else:
             print(f"{column}: Invalid move!")
@@ -156,27 +204,59 @@ class ConnectX:
 
     def get_winner(self):
         """
-        Getter. Returns game winner.
-        :return: Game winner
+        Getter. Returns game _winner.
+        :return: Game _winner
         """
-        return self.winner
+        return self._winner
 
     def get_moves(self):
         """
         Returns move history of all players.
         :returns Move history.
         """
-        return self.moves
+        return self._moves
+
+    def get_state(self, string=True):
+        """
+        Gets state of the _board as a string or as a list
+        :param string: State representation. If True, returns string, else returns list.
+        :returns State represented as string or list
+        """
+
+        if string:
+            return "".join(self._board)
+        else:
+            return self._board
+
+    def _print_vdiv(self):
+        """
+        Pretty-prints vertical divider for the _board.
+        """
+        for _ in range(self.columns):
+            print('+---', end='')
+        print('+')
 
     def print_state(self):
-        for r in range(self.columns):
-            for c in range(self.rows):
-                mark = self.board[c][r]
+        """
+        Pretty prints the current state of the _board, the turn number, most recent move and a _winner, if one is present.
+        """
+        i = 0
+        print(f"TURN {self.turn}. COL: {self._moves[-1]}")
 
-                if mark is None:
-                    print(" 0 ", end='')
-                else:
-                    print(f" {mark} ", end='')
-            print("")
+        self._print_vdiv()
 
-        print(f"WINNER: {self.winner}")
+        while i < len(self._board):
+            mark = self._board[i]
+            if mark == "0":
+                print(f"|   ", end='')
+            else:
+                print(f"| {mark} ", end='')
+
+            if i % self.columns == self.columns - 1:
+                print("|")
+                self._print_vdiv()
+
+            i += 1
+
+        if self._winner is not None:
+            print(f"WINNER: {self._winner}")

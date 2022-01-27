@@ -3,7 +3,7 @@ import numpy as np
 class Board:
     def __init__(self, height = 6, width = 7, goal = 4):
         """
-        Initializes the connect-X board object
+        Initializes the connect-X game object
         """
         self.height = height
         self.width = width
