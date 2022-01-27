@@ -16,21 +16,36 @@ class ConnectX:
         self.goal = goal  # sets goal
         self._board = ['0'] * self.columns * self.rows  # game board
         self.turn = 0  # number of turns since start
-        self._winner = None  # player that won the game
+        self._winner = None  # mark that won the game
+
+    def self_play(self, agent, render=False):
+        """
+        Runs game with agent self-play.
+        :param agent: Agent that plays against itself
+        :param render: If True, prints board state and other info at every turn. Prints nothing if False.
+        :returns the winner of the game.
+        """
+        while self._winner is None:
+
+
 
     def run(self, agent0, agent1=None, render=False):
         """
         Runs game with given agents.
         :param agent0: Required agent.
-        :param agent1: Optional agent. If None chosen, agent that randomly chooses is selected.
+        :param agent1: Optional agent. If None chosen, self-play is used.
+        If "random" selected, agent plays against a randomly selecting agent.
         :param render: If True, prints board state and other info at every turn. Prints nothing if False.
         :returns The winner of the game.
         """
+        if agent1 is None:
+            self.self_play(agent0, render)
+
         agents = [agent0, agent1]
         shuffle(agents)  # shuffles agent order to make it random.
         while self._winner is None:
             for ag in agents:
-                if ag is None:
+                if ag is "random":
                     vmoves = self.valid_moves()
                     self.add_piece(choice(vmoves), "R")
                 else:
@@ -44,7 +59,7 @@ class ConnectX:
 
         self._board = ['0'] * self.columns * self.rows  # game board
         self.turn = 0  # number of turns since start
-        self._winner = None  # player that won the game
+        self._winner = None  # mark that won the game
 
     def valid_moves(self):
         """
@@ -168,7 +183,7 @@ class ConnectX:
     # Returns True if dropping piece in column results in game win
     def _check_win(self, pos, mark):
         """
-        Checks if the player has won based on the new piece position
+        Checks if the mark has won based on the new piece position
         :param pos: Piece position on _board as index of self._board
         :param mark: Player mark
         :returns True if it is a winning move, False if it is not a winning move
@@ -189,36 +204,68 @@ class ConnectX:
 
         return False
 
-    def add_piece(self, column, player):
+    def add_piece(self, column, mark):
         """
         Attempts to add a piece to the game.
         :param column: Column to add a game to.
-        :param player: Single-character mark of the player adding a piece.
+        :param mark: Single-character mark of the mark adding a piece.
         :returns True
         """
 
         if self._winner is not None:
             return False
 
-        if len(player) > 1:
-            sys.exit(f"{player}: name too long!")
-        if player == "0":
+        if len(mark) > 1:
+            sys.exit(f"{mark}: name too long!")
+        if mark == "0":
             sys.exit("Player name cannot be 0!")
 
         if column in self.valid_moves():
-            pos = self._drop_piece(column, player)  # update _board
+            pos = self._drop_piece(column, mark)  # update _board
             self.turn += 1  # update turn count
 
-            if self._check_win(pos, player):  # check if this is a winning move
-                self._winner = player
+            if self._check_win(pos, mark):  # check if this is a winning move
+                self._winner = mark
             elif '0' not in self._board:  # check if its a draw
                 self._winner = "DRAW"
 
-            self._moves.append(column)  # update move history
+            self._moves.append((mark,column))  # update move history
             return True
         else:
             print(f"{column}: Invalid move!")
             return False
+
+    def get_reward(self, mark):
+        """
+        Returns reward for the game.
+        :param mark: Player mark
+        :returns 1 if the given mark won, -1 if they lost, otherwise 0.
+        """
+        if self._winner is None:
+            return 0
+        elif self._winner == mark:
+            return 1
+        else:
+            return -1
+
+    def step(self, player):
+        """
+        Runs one step of the game for the given agent. Updates board and provides additional information.
+        :param player: Agent
+        :returns Move success, Result state, reward, and whether or not the game is done.
+        """
+        col = player.play()
+        success = self.add_piece(player, col) # adds piece, updates winner, turn, board, returns move validity
+        next_state = self.get_state(mark=player.name) # board state from mark pov after previous move attempted
+        reward = self.get_reward(player.name) # mark "reward" for the state
+        done = (self._winner is not None) # whether or not game is complete
+        return success, next_state, reward, done
+
+agent_moves = step(agent)
+opp.update_values()
+opponent_moves = step(opp)
+agent.update(agent.state,)
+
 
     def get_winner(self):
         """
@@ -229,22 +276,36 @@ class ConnectX:
 
     def get_moves(self):
         """
-        Returns move history of all players.
-        :returns Move history.
+        Getter. Returns move history of all players.
+        :returns Move history in form (mark,move)
         """
         return self._moves
 
-    def get_state(self, string=True):
+    def get_state(self, mark=None, string=True):
         """
         Gets state of the _board as a string or as a list
+        :param mark: Player mark. If given, state replaces mark's mark with "1", and the adversary's mark with "2".
+        Standardizes state representations for self-play.
         :param string: State representation. If True, returns string, else returns list.
         :returns State represented as string or list
         """
 
-        if string:
-            return "".join(self._board)
+        if mark is not None:
+            state = []
+            for p in self._board:
+                if p == '0':
+                    state.append("0")
+                elif p == mark:
+                    state.append("1")
+                else:
+                    state.append("2")
         else:
-            return self._board
+            state = self._board.copy()
+
+        if string:
+            return "".join(state)
+        else:
+            return state
 
     def _print_vdiv(self):
         """

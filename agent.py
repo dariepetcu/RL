@@ -5,6 +5,14 @@ class Mode(Enum):
     SARSA = 2
     MC = 3
 
+class Expl(Enum):
+    GREEDY = 0
+    EPSILON_GREEDY = 1
+    OPTIMISTIC = 2
+    SOFTMAX = 3
+    UCB = 4
+    ACTION_PREFERENCES = 5
+
 class Agent:
     """
     Agent class. Plays Connect 4 and learns from it.
@@ -35,25 +43,54 @@ class Agent:
         self.mode = mode
         self.G = []
 
-    def get_reward(self):
-        """
-        Determines the reward for the game based on whether the game is over and who won.
-        :returns reward for the game
-        """
-        winner = self.game.get_winner()
-        if winner is None or winner == "DRAW":
-            return 0
-        elif winner == self.name:
-            return 1
-        else:
-            return -1
-
     def play(self):
         """
         Makes a decision of which column to play based on the current state of the game.
         :returns column decision.
         """
-        return "69 lol"
+        col = None
+        """
+        state = begin()
+        action = select_action()
+        state_history.append(state)
+        action_history.append(action)
+        state, reward, done = env.step()
+        while not done:
+            prev_state = self.state_history[-1]
+            update_estimates(prev_state, action, reward, state, next_action)
+            next_state, next_action, reward, done = step(action)
+            
+        """
+        return col
+
+    def select_action(self):
+        match self.exploration:
+            case Expl.GREEDY:
+                selected_arm = self.greedy()
+            case Expl.EPSILON_GREEDY:
+                selected_arm = self.epsilon_greedy()
+            case Expl.OPTIMISTIC:
+                # greedy action selection used for opt init vals
+                selected_arm = self.greedy()
+            case Expl.SOFTMAX:
+                selected_arm = self.softmax()
+            case Expl.UCB:
+                selected_arm = self.ucb()
+            case Expl.ACTION_PREFERENCES:
+                selected_arm = self.action_pref()
+            case _:
+                sys.exit("Invalid selection mode selected!")
+        reward, is_best = self.env.pull_arm(selected_arm)
+        return selected_arm, reward, is_best
+
+    def update_estimates(self):
+        match self.mode:
+            case Mode.Q:
+                self.Q()
+            case Mode.SARSA:
+                self.sarsa()
+            case Mode.MC:
+                self.montecarlo()
 
     def reset(self):
         self.action_history.clear()
@@ -82,7 +119,7 @@ class Agent:
                 pass
 
     def update_SARSA(self, time):
-        state = self.game.get_state()
+        state = self.game.get_state(player=self.name)
         stateNew = state
         actionNew = 0
         for action in self.game.valid_moves():
