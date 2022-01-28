@@ -14,35 +14,25 @@ def self_play(game, agent, render=False):
     :returns the winner of the game.
     """
     marks = ("A", "B")  # player names
-    turns = {"A": 0, "B": 0}
     reward = 0
 
     # initial action for both sides
     for mark in marks:
         agent.name = mark
-        agent.turns = turns[mark]
-
         col = agent.select_action()  # select new action
         success, reward = game.step(col, agent.name)  # play action
-        if success:
-            turns[agent.name] += 1
-            agent.turns += 1
 
     # loop until a winner is decided
     while game.get_winner() is None:
 
         # switches agent "perspective"
         agent.name = marks[game.turn % 2]
-        agent.turns = turns[agent.name]
 
         # select action at+1 based on st+1
         col = agent.select_action()
 
         # put piece
         success, reward = game.step(col, agent.name)
-        if success:
-            turns[agent.name] += 1
-            agent.turns += 1
 
         # update estimates based on known values
         agent.update_estimates(reward)
@@ -87,8 +77,6 @@ def agent_play(game, agent0, agent1, render=False):
     for agent in agents:
         col = agent.select_action()  # select new action
         success, reward = game.step(col, agent.name)  # play action
-        if success:
-            agent.turns += 1
 
     # loop until a winner is decided
     while game.get_winner() is None:
@@ -101,8 +89,6 @@ def agent_play(game, agent0, agent1, render=False):
 
         # put piece
         success, reward = game.step(col, agent.name)
-        if success:
-            agent.turns += 1
 
         # update estimates based on known values
         agent.update_estimates(reward)

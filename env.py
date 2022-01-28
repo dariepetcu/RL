@@ -242,6 +242,22 @@ class ConnectX:
 
         return self._moves[idx]
 
+    def get_player_states(self, mark):
+        """
+        Gets all states that a specific player played.
+        :param mark: Player move mark
+        :returns number of player states, list of player states
+        """
+        player_states = [] # player states
+        player_turns = 0 # number of player turns
+        for i in self._moves:
+            move_mark = self._moves[i][0]
+            if mark == move_mark:
+                player_states.append(self._history[0])
+                player_turns += 1
+
+        return player_turns, player_states
+
     def get_state(self, traceback=0, mark=None, string=True):
         """
         Gets state of the _board from the state history as a string or as a list
@@ -287,7 +303,10 @@ class ConnectX:
         Creates a copy of the end state at the end of the history state.
         """
         self._history.append(self._history[-1])
-        self._moves.append(self._moves[-1])
+        move = self._moves[-1].copy()
+        #move[0] = "0" # replace id with "0" to indicate that this is a copied move
+        self._moves.append(move)
+
         self.turn += 1
 
     def print_state(self):
