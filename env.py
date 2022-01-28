@@ -207,20 +207,9 @@ class ConnectX:
         if self._winner is None or self._winner == "DRAW":
             return 0
         elif self._winner == mark:
-            return 1
+            return 10
         else:
-            return -1
-
-    def step(self, col, mark):
-        """
-        Runs one step of the game for the given agent. Updates board and provides additional information.
-        :param col: Agent's select column
-        :param mark: Agent name
-        :returns Move success, Result state, reward, and whether or not the game is done.
-        """
-        success = self.add_piece(col, mark)  # adds piece, updates winner, turn, board, returns move validity
-        reward = self.get_reward(mark)  # mark "reward" for the state
-        return success, reward
+            return -5
 
     def get_winner(self):
         """
@@ -259,8 +248,20 @@ class ConnectX:
         player_history = []  # player states
         player_turns = 0  # number of player turns
 
+        if self._winner is not None: # append winning state if it exists
+            state = self.standardize_state(self._history[-1], mark)
+
+            if string:
+                state = "".join(state)
+
+            player_history.append((state, 0)) #arbitrary move 0 for final state
+            player_turns += 1
+
         for i, move in reversed(list(enumerate(self._moves))):
             #print(i, "".join(self._history[i]))
+            if 0 < n == player_turns:  # check if n most recent turns have already been counted
+                break
+
             move_mark = move[0]
             if mark == move_mark or (i == len(self._moves) - 1 and self._winner is not None):
                 state = self.standardize_state(self._history[i], mark)
@@ -270,8 +271,6 @@ class ConnectX:
                 player_history.insert(0, (state, move[1]))
                 player_turns += 1
 
-                if 0 < n == player_turns:  # check if n most recent turns have already been counted
-                    break
 
         return player_turns, player_history
 

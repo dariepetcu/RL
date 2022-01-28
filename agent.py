@@ -48,7 +48,6 @@ class Agent:
 
         self.alpha = alpha  # learning rate
         self.gamma = gamma  # discount factor
-        self.gammaMC = 0.99  # discount parameter for monte carlo
         self.epsilon = epsilon  # epsilon for epsilon-greedy
 
         # length of eligibility trace
@@ -127,7 +126,7 @@ class Agent:
         self.G = [0] * turns
         # start from turns-1 because G[turns] = 0
         for i in range(turns - 1, 0, -1):
-            self.G[i] = pow(self.gammaMC, turns - i - 1) * reward
+            self.G[i] = pow(self.gamma, turns - i - 1) * reward
         self.mc_update(turns, history)
 
     def mc_update(self, turns, history):
@@ -230,6 +229,8 @@ class Agent:
         turns, history = self.game.get_player_history(self.name, n=2)
         state, action = history[0]
         next_state, next_action = history[1]
+        #print(f"ACTION: {action}\nOLD: {state}")
+        #print(f"NEW: {next_state}")
         return state, action, next_state, next_action
 
     def set_hyperparameter(self, hyper, value):
@@ -246,7 +247,5 @@ class Agent:
                 self.epsilon = value
             case "gamma":
                 self.gamma = value
-            case "gammaMC":
-                self.gammaMC = value
             case _:
                 print(f"{hyper}: Invalid hyperparameter!")

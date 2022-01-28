@@ -18,19 +18,21 @@ def self_play(game, agent, render=False):
     for mark in marks:
         agent.name = mark
         col = agent.select_action()  # select new action
-        success, reward = game.step(col, agent.name)  # play action
+        success = game.add_piece(col, agent.name)  # play action
 
     # loop until a winner is decided
     while game.get_winner() is None:
-
         # switches agent "perspective"
         agent.name = marks[game.turn % 2]
+
+        # gets reward rt
+        reward = game.get_reward(agent.name)
 
         # select action at+1 based on st+1
         col = agent.select_action()
 
         # put piece
-        success, reward = game.step(col, agent.name)
+        success = game.add_piece(col, agent.name)
 
         # update estimates based on known values
         agent.update_estimates(reward)
@@ -49,8 +51,8 @@ def self_play(game, agent, render=False):
         reward = game.get_reward(agent.name)
         agent.update_estimates(reward)
 
-        if render:
-            game.print_state()
+    if render:
+        game.print_state()
 
     agent.name = aname
     return game.get_winner()
@@ -65,8 +67,6 @@ def agent_play(game, agent0, agent1, render=False):
     :param render: If True, prints board state and other info at every turn. Prints nothing if False.
     :returns the winner of the game.
     """
-    # agent0.name = "A"
-    # agent1.name = "B"
     agents = [agent0, agent1]
     shuffle(agents)
     reward = 0
@@ -74,7 +74,7 @@ def agent_play(game, agent0, agent1, render=False):
     # initial action for both sides
     for agent in agents:
         col = agent.select_action()  # select new action
-        success, reward = game.step(col, agent.name)  # play action
+        success = game.add_piece(col, agent.name)  # play action
 
     # loop until a winner is decided
     while game.get_winner() is None:
@@ -82,11 +82,14 @@ def agent_play(game, agent0, agent1, render=False):
         # switches agent "perspective"
         agent = agents[game.turn % 2]
 
+        # gets reward rt
+        reward = game.get_reward(agent.name)
+
         # select action at+1 based on st+1
         col = agent.select_action()
 
         # put piece
-        success, reward = game.step(col, agent.name)
+        success = game.add_piece(col, agent.name)
 
         # update estimates based on known values
         agent.update_estimates(reward)
@@ -104,8 +107,8 @@ def agent_play(game, agent0, agent1, render=False):
         reward = game.get_reward(agent.name)
         agent.update_estimates(reward)
 
-        if render:
-            game.print_state()
+    if render:
+        game.print_state()
 
     return game.get_winner()
 
@@ -182,14 +185,14 @@ def play_agent(agent0):
 
     while game.get_winner() is None:
         acol = agent0.select_action()
-        game.step(acol, agent0.name)
+        game.add_piece(acol, agent0.name)
         game.print_state()
         print(f"VALID MOVES: {game.valid_moves()}")
         while True and game.get_winner() is None:
             move = input("SELECT A COLUMN: ")
             try:
                 move = int(move)
-                success, reward = game.step(move, "P")
+                success, reward = game.add_piece(move, "P")
             except ValueError:
                 success = False
             if not success:

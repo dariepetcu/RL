@@ -68,9 +68,9 @@ def plot_average(win_history, agent, oparams=(None, None)):
     # plot various rates
     winrate, lossrate, drawrate = avg_winrate(win_history, agent.name)
     plt.plot([0, epochs], [50, 50], c='grey', linestyle='--')
-    plt.plot(winrate, label="Win rate")
-    plt.plot(lossrate, label="Loss rate")
-    plt.plot(drawrate, label="Draw rate")
+    plt.plot(winrate, label="Win rate", color='green')
+    plt.plot(lossrate, label="Loss rate", color='red')
+    plt.plot(drawrate, label="Draw rate", color='blue')
 
     # display legend
     plt.legend(loc='upper right')
@@ -117,11 +117,12 @@ def plot_hyperparameter(agents, hyperparam, vals, win_history, selection, learni
     plt.legend(loc='upper right')
     plt.xlabel("Time-step")
     plt.ylabel("Average Reward")
+    plt.xlim(epochs * .2, epochs)
     plt.title(f"Tuning of hyperparameter {hyperparam} for S={selection}, L={learning}")
 
     # save
     fcount = 0
-    if isfile(f"{cwd()}/plots/tuning/{selection}_{learning}_{hyperparam.upper()}_ATTEMPT{fcount}.png"):
+    while isfile(f"{cwd()}/plots/tuning/{selection}_{learning}_{hyperparam.upper()}_ATTEMPT{fcount}.png"):
         fcount += 1
 
     fname = f"{cwd()}/plots/tuning/{selection}_{learning}_{hyperparam.upper()}_ATTEMPT{fcount}.png"

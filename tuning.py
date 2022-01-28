@@ -1,6 +1,6 @@
 import numpy as np
 
-from agent import Agent, Selection
+from agent import Agent, Selection, Learning
 from env import ConnectX
 from play import train_agent
 from plot import plot_hyperparameter
@@ -28,15 +28,13 @@ def run_tuning(selection, learning, opponent=None, hyperparam="alpha", lim=(0, 1
     match opponent:
         case "brick":
             opponent = Agent(game, name="B", selection=Selection.BRICK)
-        case "random":
-            opponent = Agent(game, name="B", selection=Selection.RANDOM)
         case _:
-            opponent = None
+            opponent = Agent(game, name="B", selection=Selection.RANDOM)
 
     for val in tune_space:
         agent0 = Agent(game, "A", selection=selection, learning=learning)
         agent0.set_hyperparameter(hyperparam, val)
-        winners, win_history = train_agent(game, agent0, opponent,epochs=1000)
+        winners, win_history = train_agent(game, agent0, opponent)
 
         agents.append(agent0)
         wins.append(win_history)
@@ -44,3 +42,19 @@ def run_tuning(selection, learning, opponent=None, hyperparam="alpha", lim=(0, 1
         game.reset()
 
     plot_hyperparameter(agents, hyperparam, tune_space, wins, selection.name, learning.name)
+
+
+def tune_MC():
+    run_tuning(Selection.EPSILON_GREEDY, Learning.MC, hyperparam="epsilon")
+    run_tuning(Selection.EPSILON_GREEDY, Learning.MC, hyperparam="alpha")
+    run_tuning(Selection.EPSILON_GREEDY, Learning.MC, hyperparam="gamma")
+
+def tune_SARSA():
+    run_tuning(Selection.EPSILON_GREEDY, Learning.SARSA, hyperparam="epsilon")
+    run_tuning(Selection.EPSILON_GREEDY, Learning.SARSA, hyperparam="alpha")
+    run_tuning(Selection.EPSILON_GREEDY, Learning.SARSA, hyperparam="gamma")
+
+def tune_Q():
+    run_tuning(Selection.EPSILON_GREEDY, Learning.Q, hyperparam="epsilon")
+    run_tuning(Selection.EPSILON_GREEDY, Learning.Q, hyperparam="alpha")
+    run_tuning(Selection.EPSILON_GREEDY, Learning.Q, hyperparam="gamma")
