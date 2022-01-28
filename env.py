@@ -204,7 +204,7 @@ class ConnectX:
         :param mark: Player mark
         :returns 1 if the given mark won, -1 if they lost, otherwise 0.
         """
-        if self._winner is None:
+        if self._winner is None or self._winner == "DRAW":
             return 0
         elif self._winner == mark:
             return 1
