@@ -167,17 +167,3 @@ def run_tuning(mode, dist_type, tune_num=10, num=300):
 
     # plot hyperparameter graph
     plot_hyperparameter(avg_rewards, mode, num, tune_space)
-
-
-def main():
-    """
-    Runs the multi-armed bandit problem for the given distribution with k arms, num iterations, and plots the results
-    """
-    dist_type = Dist.BERNOULLI  # dist to use for plotting
-    k = 7  # number of arms
-    num = 1000  # number of problem iterations
-    run_and_plot_avg(dist_type, k, num)
-
-
-if __name__ == "__main__":
-    main()

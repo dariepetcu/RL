@@ -23,7 +23,7 @@ class Agent:
     Agent class. Plays Connect 4 and learns from it.
     """
 
-    def __init__(self, game, name, learning=Learning.Q, selection=Selection.EPSILON_GREEDY, alpha=0.5, gamma=0.9,
+    def __init__(self, game, name, learning=Learning.Q, selection=Selection.EPSILON_GREEDY, alpha=0.99, gamma=0.99,
                  epsilon=0.38):
         """
         Initializes an agent that can play Connect 4 with reinforcement learning enabled.
@@ -80,7 +80,7 @@ class Agent:
             case Selection.RANDOM:
                 action = self.random_agent()
             case _:
-                sys.exit(f"{self.selection}: Invalid action learning method!")
+                sys.exit(f"{self.selection}: Invalid action selection method!")
             # case Selection.OPTIMISTIC:
             #     # greedy action learning used for opt init vals
             #     action = self.greedy()
@@ -91,7 +91,7 @@ class Agent:
             # case Selection.ACTION_PREFERENCES:
             #     action = self.action_pref()
             # case _:
-            #     sys.exit("Invalid learning learning selected!")
+            #     sys.exit("Invalid learning selected!")
         return action
 
     def update_estimates(self, reward):
@@ -102,10 +102,11 @@ class Agent:
                 self.QLearn(reward)
             case Learning.SARSA:
                 self.update_SARSA(reward)
+            case Learning.MC:
+                if self.game.get_winner() is not None:
+                    self.montecarlo(reward)
             case _:
                 return
-            # case Learning.MC:
-            #     self.montecarlo(reward)
 
     def Q(self, state, action):
         return self.Qpairs.get(state, [0] * self.game.columns)[action]
@@ -115,11 +116,23 @@ class Agent:
         new_entry[action] = updated_Q
         self.Qpairs[state] = new_entry
 
-    # def montecarlo(self, reward):
-    #     self.G = [0] * self.game.turn
-    #     self.G[self.game.turn] = 0
-    #     for i in range(self.game.turn, 0, -1):
-    #         self.G[i] += pow(self.gammaMC, i) * reward
+    def montecarlo(self, reward):
+        turns = self.turns
+        self.G = [0] * turns
+        # start from turns-1 because G[turns] = 0
+        for i in range(turns - 1, 0, -1):
+            self.G[i] = pow(self.gammaMC, turns - i - 1) * reward
+        self.mc_update()
+
+    def mc_update(self):
+        for idx in range(self.turns):
+            state = self.game.get_state(self.turns - idx, mark=self.name)
+            move = self.game.get_move(self.turns - idx)
+            print(move)
+            action = move[1]
+            updated_Q = self.Q(state, action)
+            updated_Q += self.alpha * (self.G[idx] - updated_Q)
+            self.renew_Q(state, action, updated_Q)
 
     # def eligibility_trace(self, reward):
     #     for idx in range(self.depth):
@@ -137,10 +150,9 @@ class Agent:
 
     def update_SARSA(self, reward):
         state, action, next_state, next_action = self.get_sa_pairs()
-        for action in self.game.valid_moves():
-            updated_Q = self.Q(state, action)
-            updated_Q += self.alpha * (reward + self.gamma * self.Q(next_state, next_action) - self.Q(state, action))
-            self.renew_Q(state, action, updated_Q)
+        updated_Q = self.Q(state, action)
+        updated_Q += self.alpha * (reward + self.gamma * self.Q(next_state, next_action) - self.Q(state, action))
+        self.renew_Q(state, action, updated_Q)
 
     def greedy(self):
         state = self.game.get_state(mark=self.name)

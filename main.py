@@ -143,10 +143,12 @@ def run(game, agent0, agent1=None, render=False):
         return agent_play(game, agent0, agent1, render)
 
 
-def train_agent(epochs=1000, render=False):
-    game = ConnectX()
-    agent0 = Agent(game, "A")
-    agent1 = Agent(game, "B", selection=Selection.BRICK)
+def train_agent(game, agent0, agent1=None, epochs=1000, render=False):
+    print(f"{agent0.name} vs ", end="")
+    if agent1 is None:
+        print("itself: ", end="")
+    else:
+        print(f"{agent1.name}: ", end="")
     print("Initializing training....")
     if agent1 is not None:
         winners = {agent0.name: 0, agent1.name: 0, "DRAW": 0}
