@@ -76,15 +76,12 @@ class ConnectX:
         while i % self.columns != 0 and not i < self.columns:
             i -= step
 
-        count = 0
-        while i < len(self._board) and count < self.columns:
+        while True:
             nd_pieces.append(self._board[i])
-            # check if the counter isn't "looping back" to the first row from the last
-            if i % self.columns > (i + step) % self.columns:
+
+            i += step
+            if i % self.columns == 0 or not i < len(self._board):
                 break
-            else:
-                i += step
-                count += 1
 
         return nd_pieces
 
@@ -99,19 +96,16 @@ class ConnectX:
         i = pos
         step = self.columns - 1
 
-        while i % self.columns != 0 and not i < self.columns:
+        while i % self.columns != (self.columns - 1) and not i < self.columns:
             i -= step
 
-        count = 0
-        while i < len(self._board) and count < self.columns:
+        while True:
             pd_pieces.append(self._board[i])
 
             # check if the counter isn't "looping back" to the last row from the first
-            if i % self.columns < (i + step) % self.columns:
+            i += step
+            if i % self.columns == 6 or not i < len(self._board):
                 break
-            else:
-                i += step
-                count += 1
 
         return pd_pieces
 
@@ -183,7 +177,7 @@ class ConnectX:
         if self._winner is not None:
             return False
 
-        if len(mark) > 1:
+        if len(str(mark)) > 1:
             sys.exit(f"{mark}: name too long!")
         if mark == "0":
             sys.exit("Player name cannot be 0!")
@@ -224,7 +218,7 @@ class ConnectX:
         :param mark: Agent name
         :returns Move success, Result state, reward, and whether or not the game is done.
         """
-        success = self.add_piece(mark, col)  # adds piece, updates winner, turn, board, returns move validity
+        success = self.add_piece(col, mark)  # adds piece, updates winner, turn, board, returns move validity
         reward = self.get_reward(mark)  # mark "reward" for the state
         return success, reward
 
@@ -240,18 +234,19 @@ class ConnectX:
         Getter. Returns a specific moe from the move history
         :returns Move at turn t (mark,move)
         """
+
         idx = -1 - traceback  # traceback of most recent state.
-        if self.turn - idx < 0:
+        if self.turn + 1 - idx < 0:
             idx = 0
 
         return self._moves[idx]
 
-    def get_state(self, mark=None, traceback=0, string=True):
+    def get_state(self, traceback=0, mark=None, string=True):
         """
         Gets state of the _board from the state history as a string or as a list
+        :param traceback: How many states ago the retrieved state is. traceback=0 is the most recent state.
         :param mark: Player mark. If given, state replaces mark's mark with "1", and the adversary's mark with "2".
         Standardizes state representations for game-play.
-        :param traceback: How many states ago the retrieved state is. traceback=0 is the most recent state.
         :param string: State representation. If True, returns string, else returns list.
         :returns State represented as string or list
         """
@@ -300,7 +295,10 @@ class ConnectX:
         most recent move and a _winner, if one is present.
         """
         i = 0
-        print(f"TURN {self.turn}. COL: {self._moves[-1]}")
+        move = "NONE"
+        if len(self._moves) > 0:
+            move = self._moves[-1]
+        print(f"TURN {self.turn}. COL: {move}")
 
         self._print_vdiv()
 

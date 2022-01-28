@@ -3,13 +3,13 @@ from enum import Enum
 import random
 
 
-class Mode(Enum):
+class Learning(Enum):
     Q = 1
     SARSA = 2
     MC = 3
 
 
-class Expl(Enum):
+class Selection(Enum):
     GREEDY = 0
     EPSILON_GREEDY = 1
     OPTIMISTIC = 2
@@ -17,45 +17,43 @@ class Expl(Enum):
     UCB = 4
     ACTION_PREFERENCES = 5
 
-
 class Agent:
     """
     Agent class. Plays Connect 4 and learns from it.
     """
 
-    def __init__(self, game, name, mode=Mode.Q, exploration=Expl.EPSILON_GREEDY, alpha=0.5, gamma=0.9,
-                 epsilon=0.38, depth=42):
+    def __init__(self, game, name, learning=Learning.Q, selection=Selection.EPSILON_GREEDY, alpha=0.5, gamma=0.9,
+                 epsilon=0.38):
         """
         Initializes an agent that can play Connect 4 with reinforcement learning enabled.
         :param game: Board state represented as a matrix of size rows x columns
-        :param mark: Player number of agent, either "1" or "2"
-        :param rows: Number of rows
-        :param columns: Number of columns
-        :param goal: Number of pieces in a row required to win
+        :param name: Agent name.
+        :param learning: Learning mode.
+        :param selection: Selection setting.
+        :param alpha: Learning rate.
+        :param gamma: Discount parameter.
+        :param epsilon: Epsilon for epsilon-greedy.
         """
 
-        self.game = game
-        self.current_sel = 0
-        self.name = name
-        self.Qpairs = {}
-        self.state_history = []
-        self.action_history = []
+        self.game = game # game environment
+        self.current_sel = 0 # bricklaying parameter.
+        self.name = name # agent name.
+        self.Qpairs = {} # state-action dictionary
 
-        self.mode = mode
-        self.exploration = exploration
+        self.learning = learning # learning mode
+        self.selection = selection # learning mode
         self.G = []
 
-        self.alpha = alpha
-        self.gamma = gamma
-        self.gammaMC = 0.99
-        self.epsilon = epsilon
+        self.alpha = alpha # learning rate
+        self.gamma = gamma # discount factor
+        self.gammaMC = 0.99 # discount parameter for monte carlo
+        self.epsilon = epsilon # epsilon for epsilon-greedy
+
         # length of eligibility trace
-        self.depth = depth
+        self.depth = self.game.rows * self.game.columns  #
         self.decay = 0.8
 
     def reset(self):
-        self.action_history.clear()
-        self.state_history.clear()
         self.G = []
 
     def brick_layer(self):
@@ -64,33 +62,37 @@ class Agent:
         return self.current_sel
 
     def select_action(self):
-        match self.exploration:
-            case Expl.GREEDY:
+        match self.selection:
+            case Selection.GREEDY:
                 action = self.greedy()
-            case Expl.EPSILON_GREEDY:
+            case Selection.EPSILON_GREEDY:
                 action = self.epsilon_greedy()
             case _:
-                sys.exit(f"{self.exploration}: Invalid action selection method!")
-            # case Expl.OPTIMISTIC:
-            #     # greedy action selection used for opt init vals
+                sys.exit(f"{self.selection}: Invalid action learning method!")
+            # case Selection.OPTIMISTIC:
+            #     # greedy action learning used for opt init vals
             #     action = self.greedy()
-            # case Expl.SOFTMAX:
+            # case Selection.SOFTMAX:
             #     action = self.softmax()
-            # case Expl.UCB:
+            # case Selection.UCB:
             #     action = self.ucb()
-            # case Expl.ACTION_PREFERENCES:
+            # case Selection.ACTION_PREFERENCES:
             #     action = self.action_pref()
             # case _:
-            #     sys.exit("Invalid selection mode selected!")
+            #     sys.exit("Invalid learning learning selected!")
         return action
 
     def update_estimates(self, reward):
-        match self.mode:
-            case Mode.Q:
+        if self.selection in [Selection.BRICK, Selection.RANDOM]:
+            return
+        match self.learning:
+            case Learning.Q:
                 self.QLearn(reward)
-            case Mode.SARSA:
+            case Learning.SARSA:
                 self.update_SARSA(reward)
-            # case Mode.MC:
+            case _:
+                return
+            # case Learning.MC:
             #     self.montecarlo(reward)
 
     def Q(self, state, action):
@@ -104,9 +106,9 @@ class Agent:
 
     # def eligibility_trace(self, reward):
     #     for idx in range(self.depth):
-    #         if self.mode == Mode.Q:
+    #         if self.learning == Learning.Q:
     #             pass
-    #         elif self.mode == Mode.SARSA:
+    #         elif self.learning == Learning.SARSA:
     #             pass
 
     def QLearn(self, reward):
@@ -124,7 +126,7 @@ class Agent:
 
     def greedy(self):
         state = self.game.get_state(mark=self.name)
-        best_actions = [0]
+        best_actions = []
         best_estimate = self.Qpairs.get(state, [0] * self.game.columns)[0]
 
         for action in self.game.valid_moves():
@@ -146,7 +148,7 @@ class Agent:
         if eps_action > self.epsilon:
             return self.greedy()
         else:
-            return random.randint(0, self.game.columns - 1)
+            return random.choice(self.game.valid_moves())
 
     def get_sa_pairs(self):
         """
