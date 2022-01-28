@@ -52,7 +52,7 @@ def run_and_plot_avg(dist_type=Dist.GAUSS, k=7, num=1000):
             # initialize agent using optimal parameters based on hyperparameter tuning
             agent = Agent(env, mode=mode, epsilon=.38, ucb_c=0.38, alpha=.9, tau=0.12)
 
-            # run agent and update rewards/selection
+            # run agent and update rewards/learning
             agent.run(verbose=False, max_steps=1000)
             if rewards is None:
                 rewards = agent.average_rewards
@@ -62,7 +62,7 @@ def run_and_plot_avg(dist_type=Dist.GAUSS, k=7, num=1000):
                 selections = agent.accuracy
             else:
                 selections = np.add(selections, agent.accuracy)
-        # get average selection/reward
+        # get average learning/reward
         rewards = [x / num for x in rewards]
         selections = [x / num for x in selections]
         avg_rewards.append(rewards)
@@ -78,7 +78,7 @@ def plot_hyperparameter(avg_rewards, mode, num, tune_space):
     """
     Plots a graph for the average performance of multiple agents for one distribution.
     :param tune_space: Values for which agents were trained
-    :param mode: Mode for which hyperparameters were tuned
+    :param mode: Learning for which hyperparameters were tuned
     :param num: Number of iterations
     :param avg_rewards: List of average rewards over time per agent.
     """
@@ -102,7 +102,7 @@ def plot_hyperparameter(avg_rewards, mode, num, tune_space):
 def run_tuning(mode, dist_type, tune_num=10, num=300):
     """
     Tunes hyperparameters and plots results.
-    :param mode: Mode for which params are tuned
+    :param mode: Learning for which params are tuned
     :param dist_type: Distribution to use
     :param tune_num: Number of hyperparameter values
     :param num: Number of iterations

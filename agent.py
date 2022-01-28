@@ -36,19 +36,20 @@ class Agent:
         :param epsilon: Epsilon for epsilon-greedy.
         """
 
-        self.game = game # game environment
-        self.current_sel = 0 # bricklaying parameter.
-        self.name = name # agent name.
-        self.Qpairs = {} # state-action dictionary
+        self.game = game  # game environment
+        self.current_sel = 0  # bricklaying parameter.
+        self.name = name  # agent name.
+        self.Qpairs = {}  # state-action dictionary
+        self.turns = 0  # number of pieces the agent played successfully
 
-        self.learning = learning # learning mode
-        self.selection = selection # learning mode
+        self.learning = learning  # learning mode
+        self.selection = selection  # learning mode
         self.G = []
 
-        self.alpha = alpha # learning rate
-        self.gamma = gamma # discount factor
-        self.gammaMC = 0.99 # discount parameter for monte carlo
-        self.epsilon = epsilon # epsilon for epsilon-greedy
+        self.alpha = alpha  # learning rate
+        self.gamma = gamma  # discount factor
+        self.gammaMC = 0.99  # discount parameter for monte carlo
+        self.epsilon = epsilon  # epsilon for epsilon-greedy
 
         # length of eligibility trace
         self.depth = self.game.rows * self.game.columns  #
@@ -145,14 +146,19 @@ class Agent:
         state = self.game.get_state(mark=self.name)
         best_actions = []
         best_estimate = self.Qpairs.get(state, [0] * self.game.columns)[0]
+        valid_moves = self.game.valid_moves()
 
-        for action in self.game.valid_moves():
+        for action in valid_moves:
             estimate = self.Q(state, action)
             if estimate > best_estimate:  # new best estimated action
                 best_actions = [action]
                 best_estimate = estimate
             elif estimate == best_estimate:  # action with same highest utility
                 best_actions.append(action)
+
+        for action in best_actions:
+            if action not in valid_moves:
+                best_actions.remove(action)
 
         return random.choice(best_actions)
 

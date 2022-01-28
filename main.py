@@ -1,7 +1,7 @@
 import sys
 from random import shuffle
 
-from agent import Agent, Selection
+from agent import Agent, Selection, Learning
 from env import ConnectX
 
 
@@ -14,25 +14,35 @@ def self_play(game, agent, render=False):
     :returns the winner of the game.
     """
     marks = ("A", "B")  # player names
+    turns = {"A": 0, "B": 0}
     reward = 0
 
     # initial action for both sides
     for mark in marks:
         agent.name = mark
+        agent.turns = turns[mark]
+
         col = agent.select_action()  # select new action
         success, reward = game.step(col, agent.name)  # play action
+        if success:
+            turns[agent.name] += 1
+            agent.turns += 1
 
     # loop until a winner is decided
     while game.get_winner() is None:
 
         # switches agent "perspective"
         agent.name = marks[game.turn % 2]
+        agent.turns = turns[agent.name]
 
         # select action at+1 based on st+1
         col = agent.select_action()
 
         # put piece
         success, reward = game.step(col, agent.name)
+        if success:
+            turns[agent.name] += 1
+            agent.turns += 1
 
         # update estimates based on known values
         agent.update_estimates(reward)
@@ -67,9 +77,9 @@ def agent_play(game, agent0, agent1, render=False):
     :param render: If True, prints board state and other info at every turn. Prints nothing if False.
     :returns the winner of the game.
     """
+    # agent0.name = "A"
+    # agent1.name = "B"
     agents = [agent0, agent1]
-    agent0.name = "A"
-    agent1.name = "B"
     shuffle(agents)
     reward = 0
 
@@ -77,6 +87,8 @@ def agent_play(game, agent0, agent1, render=False):
     for agent in agents:
         col = agent.select_action()  # select new action
         success, reward = game.step(col, agent.name)  # play action
+        if success:
+            agent.turns += 1
 
     # loop until a winner is decided
     while game.get_winner() is None:
@@ -89,6 +101,8 @@ def agent_play(game, agent0, agent1, render=False):
 
         # put piece
         success, reward = game.step(col, agent.name)
+        if success:
+            agent.turns += 1
 
         # update estimates based on known values
         agent.update_estimates(reward)
@@ -102,16 +116,16 @@ def agent_play(game, agent0, agent1, render=False):
             sys.exit()
 
         # ending updates
-        for copy in (True, False):  # first
-            agent = agents[game.turn % 2]
-            reward = game.get_reward(agent.name)
-            agent.update_estimates(reward)
-            if render:
-                game.print_state()
-            if copy:  # makes a copy of the end state (to update winning agent estimations)
-                game.copy_end_state()
+    for copy in (True, False):  # first
+        agent = agents[game.turn % 2]
+        reward = game.get_reward(agent.name)
+        agent.update_estimates(reward)
+        if render:
+            game.print_state()
+        if copy:  # makes a copy of the end state (to update winning agent estimations)
+            game.copy_end_state()
 
-        return game.get_winner()
+    return game.get_winner()
 
 
 def run(game, agent0, agent1=None, render=False):
@@ -134,20 +148,20 @@ def train_agent(epochs=1000, render=False):
     agent0 = Agent(game, "A")
     agent1 = Agent(game, "B", selection=Selection.BRICK)
     print("Initializing training....")
-    winners = {}
+    if agent1 is not None:
+        winners = {agent0.name: 0, agent1.name: 0, "DRAW": 0}
+    else:
+        winners = {"A": 0, "B": 0, "DRAW": 0}
     for i in range(epochs):
         win = run(game, agent0, agent1, render=render)
-        if win in winners.keys():
-            winners[win] += 1
-        else:
-            winners[win] = 1
+        winners[win] += 1
         game.reset()
         print(f"{round(i * 100 / epochs, 1)}%", end="\r")
     print(f"WINS:")
     for key in winners.keys():
         print(f"  {key}: {winners[key]}")
 
-    return agent0
+    return winners
 
 
 def play_agent(agent0):
@@ -170,28 +184,14 @@ def play_agent(agent0):
                 break
     game.print_state()
 
-
-def menu():
-    run_choice = input(
-        "What do you want to do?\n (1) Train agent using self-play and default learning\n (2) Play against agent\n"
-        "(3)Stop the code")
-    while True:
-        match run_choice:
-            case 1:
-                train_agent(epochs=1, render=True)
-            case 2:
-                play_agent()
-            case 3:
-                break
-
-
 def main():
-    agent0 = train_agent(epochs=100000, render=False)
-    print(len(agent0.Qpairs))
-    i = 0
-    for key in agent0.Qpairs.keys():
-        if 0 not in agent0.Qpairs.get(key):
-            print(f"{key}: {agent0.Qpairs.get(key)}")
+    game = ConnectX()
+    agent0 = Agent(game, "M", learning=Learning.MC, selection=Selection.EPSILON_GREEDY)
+    agent1 = Agent(game, "R", selection=Selection.RANDOM)
+    agent2 = Agent(game, "B", selection=Selection.BRICK)
+    train_agent(game, agent0, agent1, epochs=100000, render=False)
+    train_agent(game, agent0, agent2, epochs=100000, render=False)
+    train_agent(game, agent0, epochs=100000, render=False)
     play_agent(agent0)
 
 
