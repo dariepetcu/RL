@@ -148,7 +148,7 @@ class Agent:
     def update_SARSA(self, reward):
         state, action, next_state, next_action = self.get_sa_pairs()
         updated_Q = self.Q(state, action)
-        updated_Q += self.alpha * self.TD_error(state, action, next_state, next_action)
+        updated_Q += self.alpha * self.TD_error(state, action, reward, next_state, next_action)
         self.renew_Q(state, action, updated_Q)
 
     def TD_error(self, state, action, reward, next_state, next_action, lookback=1):
@@ -230,3 +230,22 @@ class Agent:
         state, action = history[0]
         next_state, next_action = history[1]
         return state, action, next_state, next_action
+
+    def set_hyperparameter(self, hyper, value):
+        """
+        Setter. Sets the value of a provided hypeparameter. Used for tuning.
+        :param hyper: Hyperparameter to set the value of.
+        :param value: New value
+        """
+
+        match hyper:  # matches correct hyperparameter
+            case "alpha":
+                self.alpha = value
+            case "epsilon":
+                self.epsilon = value
+            case "gamma":
+                self.gamma = value
+            case "gammaMC":
+                self.gammaMC = value
+            case _:
+                print(f"{hyper}: Invalid hyperparameter!")

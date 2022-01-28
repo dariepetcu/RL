@@ -91,3 +91,39 @@ def plot_average(win_history, agent, oparams=(None, None)):
 
     # show plot
     # plt.show()
+
+
+def plot_hyperparameter(agents, hyperparam, vals, win_history, selection, learning):
+    """
+    Plots a graph for the average performance of multiple agents for one distribution.
+    :param agents: Agents trained
+    :param hyperparam: Hyperparameter name
+    :param vals: Hyperparameter values per agent
+    :param win_history: Win history of each training run per agent.
+    :param selection: Selection mode of agents
+    :param learning: Learning mode of agents
+    """
+    # create figure and plot
+    fig = plt.figure(figsize=(10, 8))
+
+    # plot hyperparam val for 0.1, 0.2, ..
+    epochs = len(win_history[0])
+
+    plt.plot([0, epochs], [50, 50], c='grey', linestyle='--')
+    for i, agent in enumerate(agents):
+        winrate, lossrate, draws = avg_winrate(win_history[i], agent.name)
+        plt.plot(winrate, label=round(vals[i], 2))
+
+    plt.legend(loc='upper right')
+    plt.xlabel("Time-step")
+    plt.ylabel("Average Reward")
+    plt.title(f"Tuning of hyperparameter {hyperparam} for S={selection}, L={learning}")
+
+    # save
+    fcount = 0
+    if isfile(f"{cwd()}/plots/tuning/{selection}_{learning}_{hyperparam.upper()}_ATTEMPT{fcount}.png"):
+        fcount += 1
+
+    fname = f"{cwd()}/plots/tuning/{selection}_{learning}_{hyperparam.upper()}_ATTEMPT{fcount}.png"
+    print("saving...")
+    fig.savefig(fname)

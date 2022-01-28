@@ -125,7 +125,7 @@ def run(game, agent0, agent1=None, render=False):
         return agent_play(game, agent0, agent1, render)
 
 
-def train_agent(game, agent0, agent1=None, epochs=1000, render=False, debug=False):
+def train_agent(game, agent0, agent1=None, epochs=10000, render=False, debug=False):
     """
     Trains the agent over the given number of epochs.
     :param game: Game environment
@@ -169,6 +169,7 @@ def train_agent(game, agent0, agent1=None, epochs=1000, render=False, debug=Fals
         print(f"  {key}: {winners[key]}")
 
     return winners, win_history
+
 
 
 def play_agent(agent0):

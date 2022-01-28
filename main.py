@@ -2,6 +2,7 @@ from agent import Agent, Selection, Learning
 from env import ConnectX
 from play import *
 from plot import plot_average
+from tuning import run_tuning
 
 
 def main():
@@ -11,8 +12,9 @@ def main():
     agent0 = agentM
     agent1 = Agent(game, "R", selection=Selection.RANDOM)
     agent2 = Agent(game, "B", selection=Selection.BRICK)
-    winners, win_history = train_agent(game, agent0, epochs=10000, render=False)
-    plot_average(win_history, agent0, (agent1.selection.name, agent1.learning.name))
+    #winners, win_history = train_agent(game, agent0, agent2, epochs=10000, render=False)
+    # plot_average(win_history, agent0, (agent1.selection.name, agent1.learning.name))
+    run_tuning(Selection.EPSILON_GREEDY, Learning.SARSA)
     return
     train_agent(game, agent0, agent1, epochs=10000, render=False, debug=False)
     train_agent(game, agent0, agent2, epochs=10000, render=False)
