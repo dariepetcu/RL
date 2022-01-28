@@ -248,17 +248,17 @@ class ConnectX:
         player_history = []  # player states
         player_turns = 0  # number of player turns
 
-        if self._winner is not None: # append winning state if it exists
+        if self._winner is not None:  # append winning state if it exists
             state = self.standardize_state(self._history[-1], mark)
 
             if string:
                 state = "".join(state)
 
-            player_history.append((state, 0)) #arbitrary move 0 for final state
+            player_history.append((state, 0))  # arbitrary move 0 for final state
             player_turns += 1
 
         for i, move in reversed(list(enumerate(self._moves))):
-            #print(i, "".join(self._history[i]))
+            # print(i, "".join(self._history[i]))
             if 0 < n == player_turns:  # check if n most recent turns have already been counted
                 break
 
@@ -270,7 +270,6 @@ class ConnectX:
                     state = "".join(state)
                 player_history.insert(0, (state, move[1]))
                 player_turns += 1
-
 
         return player_turns, player_history
 

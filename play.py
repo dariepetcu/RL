@@ -12,7 +12,6 @@ def self_play(game, agent, render=False):
     """
     aname = agent.name  # agent original name
     marks = (aname, "Z")  # player names
-    reward = 0
 
     # initial action for both sides
     for mark in marks:
@@ -69,7 +68,6 @@ def agent_play(game, agent0, agent1, render=False):
     """
     agents = [agent0, agent1]
     shuffle(agents)
-    reward = 0
 
     # initial action for both sides
     for agent in agents:
@@ -128,7 +126,7 @@ def run(game, agent0, agent1=None, render=False):
         return agent_play(game, agent0, agent1, render)
 
 
-def train_agent(game, agent0, agent1=None, epochs=10000, render=False, debug=False):
+def train_agent(game, agent0, agent1=None, epochs=10000, render=False):
     """
     Trains the agent over the given number of epochs.
     :param game: Game environment
@@ -136,7 +134,6 @@ def train_agent(game, agent0, agent1=None, epochs=10000, render=False, debug=Fal
     :param agent1: Second optional agent. If None, self-play is used.
     :param epochs: Number of epochs to train the agent for.
     :param render: If True, prints the final state of each game
-    :param debug: If True, prints additional information
     :return:
     """
 
@@ -172,7 +169,6 @@ def train_agent(game, agent0, agent1=None, epochs=10000, render=False, debug=Fal
         print(f"  {key}: {winners[key]}")
 
     return winners, win_history
-
 
 
 def play_agent(agent0):

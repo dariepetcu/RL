@@ -2,7 +2,6 @@ from agent import Agent, Selection, Learning
 from env import ConnectX
 from play import *
 from plot import plot_average
-from tuning import run_tuning, tune_MC, tune_SARSA, tune_Q
 
 
 def main():
