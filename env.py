@@ -1,4 +1,3 @@
-import random
 import sys
 
 
@@ -28,7 +27,7 @@ class ConnectX:
         self.turn = 0  # number of turns since start
         self._winner = None  # mark that won the game
         self._moves = []
-        self._history = [self._board]
+        self._history = [self._board.copy()]
 
     def valid_moves(self):
         """
@@ -193,7 +192,7 @@ class ConnectX:
                 self._winner = "DRAW"
 
             self._moves.append((mark, column))  # update move history
-            self._history.append(self._board) # update state history
+            self._history.append(self._board.copy())  # update state history
             return True
         else:
             print(f"{column}: Invalid move!")
@@ -230,33 +229,51 @@ class ConnectX:
         """
         return self._winner
 
-    def get_move(self, traceback=0):
+    @staticmethod
+    def standardize_state(board_state, mark):
         """
-        Getter. Returns a specific moe from the move history
-        :returns Move at turn t (mark,move)
+        Converts a state into the given mark's point of view. 0 == unoccupied, 1 == mark, 2 == opponent's mark
+        :param board_state: Unstandardized board state
+        :param mark: Player's mark
+        :returns standardized state
         """
+        state = []
+        for p in board_state:
+            if p == '0':
+                state.append("0")
+            elif p == mark:
+                state.append("1")
+            else:
+                state.append("2")
 
-        idx = -1 - traceback  # traceback of most recent state.
-        if self.turn + 1 - idx < 0:
-            idx = 0
+        return state
 
-        return self._moves[idx]
-
-    def get_player_states(self, mark):
+    def get_player_history(self, mark, n=0, string=True):
         """
         Gets all states that a specific player played.
         :param mark: Player move mark
+        :param n: How many of the most recent states to return. If n=0, returns all states.
+        :param string: Whether or not to convert to string. True by default.
         :returns number of player states, list of player states
         """
-        player_states = [] # player states
-        player_turns = 0 # number of player turns
-        for i in self._moves:
-            move_mark = self._moves[i][0]
-            if mark == move_mark:
-                player_states.append(self._history[0])
+        player_history = []  # player states
+        player_turns = 0  # number of player turns
+
+        for i, move in reversed(list(enumerate(self._moves))):
+            #print(i, "".join(self._history[i]))
+            move_mark = move[0]
+            if mark == move_mark or (i == len(self._moves) - 1 and self._winner is not None):
+                state = self.standardize_state(self._history[i], mark)
+
+                if string:
+                    state = "".join(state)
+                player_history.insert(0, (state, move[1]))
                 player_turns += 1
 
-        return player_turns, player_states
+                if 0 < n == player_turns:  # check if n most recent turns have already been counted
+                    break
+
+        return player_turns, player_history
 
     def get_state(self, traceback=0, mark=None, string=True):
         """
@@ -274,14 +291,7 @@ class ConnectX:
         board_state = self._history[idx]
 
         if mark is not None:
-            state = []
-            for p in board_state:
-                if p == '0':
-                    state.append("0")
-                elif p == mark:
-                    state.append("1")
-                else:
-                    state.append("2")
+            state = self.standardize_state(board_state, mark)
         else:
             state = board_state.copy()
 
@@ -297,17 +307,6 @@ class ConnectX:
         for _ in range(self.columns):
             print('+---', end='')
         print('+')
-
-    def copy_end_state(self):
-        """
-        Creates a copy of the end state at the end of the history state.
-        """
-        self._history.append(self._history[-1])
-        move = self._moves[-1].copy()
-        #move[0] = "0" # replace id with "0" to indicate that this is a copied move
-        self._moves.append(move)
-
-        self.turn += 1
 
     def print_state(self):
         """

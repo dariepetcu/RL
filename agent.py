@@ -27,17 +27,17 @@ class Agent:
                  epsilon=0.38):
         """
         Initializes an agent that can play Connect 4 with reinforcement learning enabled.
-        :param game: Board state represented as a matrix of size rows x columns
-        :param name: Agent name.
-        :param learning: Learning mode.
-        :param selection: Selection setting.
-        :param alpha: Learning rate.
-        :param gamma: Discount parameter.
-        :param epsilon: Epsilon for epsilon-greedy.
+        :param game: Board object, containing state represented as a matrix of size rows x columns
+        :param name: Agent name
+        :param learning: Learning mode
+        :param selection: Selection algorithm
+        :param alpha: Learning rate hyperparameter
+        :param gamma: Discount hyperparameter
+        :param epsilon: Epsilon hyperparameter for epsilon-greedy
         """
 
         self.game = game  # game environment
-        self.current_sel = 0  # bricklaying parameter.
+        self.current_sel = 0  # parameter used by bricklayer agent.
         self.name = name  # agent name.
         self.Qpairs = {}  # state-action dictionary
         self.turns = 0  # number of pieces the agent played successfully
@@ -117,42 +117,78 @@ class Agent:
         self.Qpairs[state] = new_entry
 
     def montecarlo(self, reward):
+        """
+        Only called after game is finished.
+        :param reward:
+        :return:
+        """
         turns = self.turns
+        turns, history = self.game.get_player_history(self.name)
         self.G = [0] * turns
         # start from turns-1 because G[turns] = 0
         for i in range(turns - 1, 0, -1):
             self.G[i] = pow(self.gammaMC, turns - i - 1) * reward
-        self.mc_update()
+        self.mc_update(turns, history)
 
-    def mc_update(self):
-        for idx in range(self.turns):
-            state = self.game.get_state(self.turns - idx, mark=self.name)
-            move = self.game.get_move(self.turns - idx)
-            print(move)
-            action = move[1]
+    def mc_update(self, turns, history):
+        for i in range(turns):
+            state = history[i][0]
+            action = history[i][1]
             updated_Q = self.Q(state, action)
-            updated_Q += self.alpha * (self.G[idx] - updated_Q)
+            updated_Q += self.alpha * (self.G[i] - updated_Q)
             self.renew_Q(state, action, updated_Q)
 
-    # def eligibility_trace(self, reward):
-    #     for idx in range(self.depth):
-    #         if self.learning == Learning.Q:
-    #             pass
-    #         elif self.learning == Learning.SARSA:
-    #             pass
 
     def QLearn(self, reward):
         state, action, next_state, next_action = self.get_sa_pairs()
         updated_Q = self.Q(state, action)
-        updated_Q += self.alpha * (reward + self.gamma * max(self.Qpairs.get(next_state, [0] * self.game.columns)) -
-                                   updated_Q)
+        updated_Q += self.alpha * self.TD_error(state, action, reward, next_state, next_action)
         self.renew_Q(state, action, updated_Q)
 
     def update_SARSA(self, reward):
         state, action, next_state, next_action = self.get_sa_pairs()
         updated_Q = self.Q(state, action)
-        updated_Q += self.alpha * (reward + self.gamma * self.Q(next_state, next_action) - self.Q(state, action))
+        updated_Q += self.alpha * self.TD_error(state, action, next_state, next_action)
         self.renew_Q(state, action, updated_Q)
+
+    def TD_error(self, state, action, reward, next_state, next_action, lookback=1):
+        match self.learning:
+            case Learning.Q:
+                return (reward + self.gamma * max(self.Qpairs.get(next_state, [0] * self.game.columns)) -
+                                   self.Q(state, action))
+            case Learning.SARSA:
+                return reward + self.gamma * self.Q(next_state, next_action) - self.Q(state, action)
+
+
+    def eligibility_trace(self, reward, lookback):
+        for idx in range(self.depth):
+            if self.learning == Learning.Q:
+                pass
+            elif self.learning == Learning.SARSA:
+                pass
+
+
+    # lamb = 0.95  # the lambda weighting factor
+    # state = env.reset()  # start the environment, get the initial state
+    # # Run the algorithm for some episodes
+    # for t in range(n_steps):
+    #     # act according to policy
+    #     action = policy(state)
+    #     new_state, reward, done = env.step(action)
+    #     # Update eligibilities
+    #     eligibility *= lamb * gamma
+    #     eligibility[state] += 1.0
+    #
+    #     # get the td-error and update every state's value estimate
+    #     # according to their eligibilities.
+    #     td_error = reward + gamma * state_values[new_state] - state_values[state]
+    #     state_values = state_values + alpha * td_error * eligibility
+    #
+    #     if done:
+    #         state = env.reset()
+    #     else:
+    #         state = new_state
+
 
     def greedy(self):
         state = self.game.get_state(mark=self.name)
@@ -190,8 +226,7 @@ class Agent:
         returns S,A,S,A sequence
         :return: s_t, a_t, s_{t+1}, a_{t+1}
         """
-        state = self.game.get_state(2, mark=self.name)
-        action = self.game.get_move(2)[1]
-        next_state = self.game.get_state(mark=self.name)
-        next_action = self.game.get_move()[1]
+        turns, history = self.game.get_player_history(self.name, n=2)
+        state, action = history[0]
+        next_state, next_action = history[1]
         return state, action, next_state, next_action
