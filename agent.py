@@ -193,8 +193,9 @@ class Agent:
     def greedy(self):
         state = self.game.get_state(mark=self.name)
         best_actions = []
-        best_estimate = self.Qpairs.get(state, [0] * self.game.columns)[0]
         valid_moves = self.game.valid_moves()
+        # initialize best move as random valid one
+        best_estimate = self.Qpairs.get(state, [0] * self.game.columns)[random.choice(valid_moves)]
 
         for action in valid_moves:
             estimate = self.Q(state, action)

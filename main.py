@@ -9,7 +9,7 @@ def main():
     game = ConnectX()
     agentM = Agent(game, "M", learning=Learning.MC, selection=Selection.EPSILON_GREEDY)
     agentQ = Agent(game, "Q", learning=Learning.Q, selection=Selection.EPSILON_GREEDY)
-    agent0 = agentM
+    agent0 = agentQ
     agent1 = Agent(game, "R", selection=Selection.RANDOM)
     agent2 = Agent(game, "B", selection=Selection.BRICK)
     #winners, win_history = train_agent(game, agent0, agent2, epochs=10000, render=False)
