@@ -14,8 +14,9 @@ class Selection(Enum):
     EPSILON_GREEDY = 1
     OPTIMISTIC = 2
     SOFTMAX = 3
-    UCB = 4
-    ACTION_PREFERENCES = 5
+    BRICK = 4
+    RANDOM = 5
+
 
 class Agent:
     """
@@ -58,8 +59,14 @@ class Agent:
 
     def brick_layer(self):
         self.current_sel += 1
-        self.current_sel %= 7
-        return self.current_sel
+        while self.current_sel not in self.game.valid_moves():
+            self.current_sel += 1
+            self.current_sel %= self.game.columns
+
+        return self.current_sel % self.game.columns
+
+    def random_agent(self):
+        return random.choice(self.game.valid_moves())
 
     def select_action(self):
         match self.selection:
@@ -67,6 +74,10 @@ class Agent:
                 action = self.greedy()
             case Selection.EPSILON_GREEDY:
                 action = self.epsilon_greedy()
+            case Selection.BRICK:
+                action = self.brick_layer()
+            case Selection.RANDOM:
+                action = self.random_agent()
             case _:
                 sys.exit(f"{self.selection}: Invalid action learning method!")
             # case Selection.OPTIMISTIC:
@@ -98,6 +109,11 @@ class Agent:
     def Q(self, state, action):
         return self.Qpairs.get(state, [0] * self.game.columns)[action]
 
+    def renew_Q(self, state, action, updated_Q):
+        new_entry = self.Qpairs.get(state, [0] * self.game.columns)
+        new_entry[action] = updated_Q
+        self.Qpairs[state] = new_entry
+
     # def montecarlo(self, reward):
     #     self.G = [0] * self.game.turn
     #     self.G[self.game.turn] = 0
@@ -116,13 +132,14 @@ class Agent:
         updated_Q = self.Q(state, action)
         updated_Q += self.alpha * (reward + self.gamma * max(self.Qpairs.get(next_state, [0] * self.game.columns)) -
                                    updated_Q)
-        self.Qpairs.get(state, [0] * self.game.columns)[action] = updated_Q
+        self.renew_Q(state, action, updated_Q)
 
     def update_SARSA(self, reward):
         state, action, next_state, next_action = self.get_sa_pairs()
         for action in self.game.valid_moves():
             updated_Q = self.Q(state, action)
             updated_Q += self.alpha * (reward + self.gamma * self.Q(next_state, next_action) - self.Q(state, action))
+            self.renew_Q(state, action, updated_Q)
 
     def greedy(self):
         state = self.game.get_state(mark=self.name)
@@ -155,5 +172,8 @@ class Agent:
         returns S,A,S,A sequence
         :return: s_t, a_t, s_{t+1}, a_{t+1}
         """
-        return self.game.get_state(2, mark=self.name), self.game.get_move(2)[1], \
-               self.game.get_state(mark=self.name), self.game.get_move()[1]
+        state = self.game.get_state(2, mark=self.name)
+        action = self.game.get_move(2)[1]
+        next_state = self.game.get_state(mark=self.name)
+        next_action = self.game.get_move()[1]
+        return state, action, next_state, next_action

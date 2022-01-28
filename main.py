@@ -150,6 +150,40 @@ def train_agent(epochs=1000, render=False):
     return agent0
 
 
+def play_agent(agent0):
+    game = ConnectX()
+    while game.get_winner() is None:
+        acol = agent0.select_action()
+        game.step(acol, agent0.name)
+        game.print_state()
+        print(f"VALID MOVES: {game.valid_moves()}")
+        while True and game.get_winner() is None:
+            move = input("SELECT A COLUMN: ")
+            try:
+                move = int(move)
+                success, reward = game.step(move, "P")
+            except ValueError:
+                success = False
+            if not success:
+                print("Invalid move!")
+            else:
+                break
+    game.print_state()
+
+
+def menu():
+    run_choice = input(
+        "What do you want to do?\n (1) Train agent using self-play and default learning\n (2) Play against agent\n"
+        "(3)Stop the code")
+    while True:
+        match run_choice:
+            case 1:
+                train_agent(epochs=1, render=True)
+            case 2:
+                play_agent()
+            case 3:
+                break
+
 
 def main():
     agent0 = train_agent(epochs=100000, render=False)
